@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 	"net/http"
+	"math/rand"
+	"errors"
 )
 
 type memStat struct {
@@ -21,7 +23,10 @@ var reportInterval time.Duration = 10
 
 var endpoint string = "http://127.0.0.1:8080"
 
+var pollCount int64 = 0
+
 func collectMemStats() {
+
 	var currentStats runtime.MemStats
 	runtime.ReadMemStats(&currentStats)
 
@@ -107,29 +112,43 @@ func collectMemStats() {
 		memStat{
 			"TotalAlloc", fmt.Sprintf("%v", currentStats.TotalAlloc), "gauge",
 		},
+		memStat{
+			"PollCount", fmt.Sprintf("%v", pollCount), "counter",
+		},
+		memStat{
+			"RandomValue", fmt.Sprintf("%v", rand.Float64()), "gauge",
+		},
 	}
+	pollCount++
 }
 
-func sendMemStats() {
+func sendMemStats() error {
 	client := &http.Client{}
 	for _, stat := range stats{
 		url := endpoint + "/update/" + stat.Type + "/" + stat.Name + "/" + stat.Value
 		
 		request, err := http.NewRequest(http.MethodPost, url, nil)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 		request.Header.Set("Content-Type", "text/plain")
 
 		response, err := client.Do(request)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
+
 		defer response.Body.Close()
+		
+		if response.StatusCode != http.StatusOK {
+			return errors.New("Wrong Status Code")
+		}
 	}
+
+	return nil
 }
 
-func RunClient() {
+func Run() {
 	collectTicker := time.NewTicker(pollInterval * time.Second)
 	sendTicker := time.NewTicker(reportInterval * time.Second)
 	
@@ -137,11 +156,13 @@ func RunClient() {
 		select {
 		case <- collectTicker.C:
 			collectMemStats()
-			// fmt.Println(stats)
 
 		case <- sendTicker.C:
 			sendMemStats()
 		}
 	}
+
+	collectTicker.Stop()
+	sendTicker.Stop()
 
 }

@@ -1,11 +1,7 @@
 package main
 
-import (
-	// handlers "github.com/fedoroko/practicum_go/internal/handlers"
-	agent "github.com/fedoroko/practicum_go/internal/agent"
-	// "fmt"
-)
+import "github.com/fedoroko/practicum_go/internal/agent"
 
 func main() {
-	agent.RunClient()
+	agent.Run()
 }
