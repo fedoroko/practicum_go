@@ -7,10 +7,6 @@ import (
 	"net/http"
 )
 
-type gauge float64
-
-type counter int64
-
 type memStat struct {
 	Name string
 	Value string
@@ -134,16 +130,16 @@ func sendMemStats() {
 }
 
 func RunClient() {
-	collect_ticker := time.NewTicker(pollInterval * time.Second)
-	send_ticker := time.NewTicker(reportInterval * time.Second)
+	collectTicker := time.NewTicker(pollInterval * time.Second)
+	sendTicker := time.NewTicker(reportInterval * time.Second)
 	
 	for {
 		select {
-		case <- collect_ticker.C:
+		case <- collectTicker.C:
 			collectMemStats()
 			// fmt.Println(stats)
 
-		case <- send_ticker.C:
+		case <- sendTicker.C:
 			sendMemStats()
 		}
 	}
