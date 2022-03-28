@@ -129,7 +129,7 @@ func sendMemStats() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(response)
+		defer response.Body.Close()
 	}
 }
 
