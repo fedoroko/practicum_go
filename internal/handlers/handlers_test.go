@@ -31,7 +31,7 @@ func TestUpdateFunc(t *testing.T) {
             name: "wrong path #1",
             url: "/update/gauge/Alloc/1/",
             want: want{
-            	code: 400,
+            	code: 404,
             	emptyBody: false,
             	contentType: "text/plain; charset=utf-8",
             },
@@ -40,7 +40,7 @@ func TestUpdateFunc(t *testing.T) {
             name: "wrong path #2",
             url: "/update/gauge/Alloc",
             want: want{
-            	code: 400,
+            	code: 404,
             	emptyBody: false,
             	contentType: "text/plain; charset=utf-8",
             },
@@ -58,7 +58,7 @@ func TestUpdateFunc(t *testing.T) {
             name: "wrong type",
             url: "/update/error/Alloc/1",
             want: want{
-            	code: 400,
+            	code: 501,
             	emptyBody: false,
             	contentType: "text/plain; charset=utf-8",
             },

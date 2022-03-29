@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"fmt"
 	"strings"
 	"github.com/fedoroko/practicum_go/internal/storage"
 )
@@ -17,14 +16,13 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 	path := r.URL.String()
 	pathArr := strings.Split(path, "/")
-	fmt.Println(len(pathArr))
 	if len(pathArr) != 5 {
-		http.Error(w, "Wrong URL pattern. Should be: /update/<type>/<name>/<value>", http.StatusBadRequest)
+		http.Error(w, "Wrong URL pattern. Should be: /update/<type>/<name>/<value>", http.StatusNotFound)
 		return
 	}
 
 	if pathArr[2] != "gauge" && pathArr[2] != "counter" {
-		http.Error(w, "Wrong type. Only types \"gauge\" and \"counter\" allowed", http.StatusBadRequest)
+		http.Error(w, "Wrong type. Only types \"gauge\" and \"counter\" allowed", http.StatusNotImplemented)
 		return
 	}
 
@@ -35,7 +33,7 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 	err := storage.Store(pathArr[2], pathArr[3], pathArr[4])
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusOK)
 	}
 
 	w.WriteHeader(http.StatusOK)
