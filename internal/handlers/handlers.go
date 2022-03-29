@@ -15,7 +15,7 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
         return
 	}
 
-	path := fmt.Sprintf("%s", r.URL)
+	path := r.URL.String()
 	pathArr := strings.Split(path, "/")
 	fmt.Println(len(pathArr))
 	if len(pathArr) != 5 {
