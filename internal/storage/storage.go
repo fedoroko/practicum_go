@@ -3,7 +3,7 @@ package storage
 import (
 	"strconv"
 	// "fmt"
-	"errors"
+	// "errors"
 )
 
 type repositories interface {
@@ -115,7 +115,7 @@ func (m MemStats) update(t string, n string, v string) error {
 		case "RandomValue":
 			dummyStorage.RandomValue = gval
 		default:
-			return errors.New("Wrong name: " + n)
+			return nil
 		}
 	} else {
 		val, err := strconv.ParseInt(v, 10, 64)
