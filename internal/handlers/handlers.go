@@ -35,7 +35,7 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 	err := storage.Store(pathArr[2], pathArr[3], pathArr[4])
 	if err != nil {
-		http.Error(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	w.WriteHeader(http.StatusOK)
