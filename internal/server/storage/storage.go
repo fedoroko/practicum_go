@@ -30,7 +30,7 @@ func Get(t string, n string) (string, error) {
 }
 
 func Values() (string, error) {
-	ret := "Known values:\n"
+	ret := "Known values: \n"
 	for n := range dummyGaugeStorage.Fields {
 		v, err := dummyGaugeStorage.get(n)
 		if err != nil {
