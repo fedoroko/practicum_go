@@ -153,6 +153,7 @@ func Run() {
 	sendTicker := time.NewTicker(reportInterval * time.Second)
 	shutdownTicker := time.NewTicker(shutdownInterval * time.Minute)
 
+loop:
 	for {
 		select {
 		case <-collectTicker.C:
@@ -165,7 +166,7 @@ func Run() {
 			collectTicker.Stop()
 			sendTicker.Stop()
 			shutdownTicker.Stop()
-			break
+			break loop
 		}
 	}
 }

@@ -30,19 +30,24 @@ func TestRouter(t *testing.T) {
 	defer ts.Close()
 
 	resp, body := testRequest(t, ts, "POST", "/update/gauge/alloc/1")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "", body)
 
-	resp, body = testRequest(t, ts, "POST", "/update/gauge/alloc/none")
+	resp, _ = testRequest(t, ts, "POST", "/update/gauge/alloc/none")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	resp, body = testRequest(t, ts, "GET", "/value/gauge/alloc")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "1", body)
 
-	resp, body = testRequest(t, ts, "GET", "/value/int/alloc")
+	resp, _ = testRequest(t, ts, "GET", "/value/int/alloc")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-	resp, body = testRequest(t, ts, "GET", "/")
+	resp, _ = testRequest(t, ts, "GET", "/")
+	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
