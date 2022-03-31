@@ -57,13 +57,14 @@ func (g *gaugeStorage) update(n string, v string) error {
 func (c *counterStorage) update(n string, v string) error {
 	if c.Fields == nil {
 		c.Fields = make(map[string]counter)
+		c.Fields["pollcount"] = 0
 	}
 	v64, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	c.Fields[n] = counter(v64)
+	c.Fields[n] += counter(v64)
 	return nil
 }
 

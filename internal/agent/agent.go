@@ -25,7 +25,7 @@ var shutdownInterval time.Duration = 60
 
 var endpoint = "http://127.0.0.1:8080"
 
-var pollCount int64 = 0
+var pollCount int64 = 28
 
 func collectMemStats() {
 
@@ -121,7 +121,7 @@ func collectMemStats() {
 			"RandomValue", fmt.Sprintf("%v", rand.Float64()), "gauge",
 		},
 	}
-	pollCount++
+	pollCount += 29
 }
 
 func sendMemStats() {
