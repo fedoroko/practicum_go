@@ -60,7 +60,7 @@ func TestUpdateFunc(t *testing.T) {
 				Value: "1",
 			},
 			want: want{
-				code:        400,
+				code:        501,
 				emptyBody:   false,
 				contentType: "text/plain; charset=utf-8",
 			},
@@ -181,8 +181,8 @@ func TestGetFunc(t *testing.T) {
 				Name: "Alloc",
 			},
 			want: want{
-				code:        404,
-				body:        "wrong type",
+				code:        501,
+				body:        "Invalid type: int",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},

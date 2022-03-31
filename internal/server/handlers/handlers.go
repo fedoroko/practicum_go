@@ -28,7 +28,12 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 	err := storage.Store(t, n, v)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		switch err.(type) {
+		case *storage.InvalidTypeError:
+			http.Error(w, err.Error(), http.StatusNotImplemented)
+		default:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -42,7 +47,12 @@ func GetFunc(w http.ResponseWriter, r *http.Request) {
 
 	ret, err := storage.Get(t, n)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		switch err.(type) {
+		case *storage.InvalidTypeError:
+			http.Error(w, err.Error(), http.StatusNotImplemented)
+		default:
+			http.Error(w, err.Error(), http.StatusNotFound)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

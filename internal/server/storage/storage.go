@@ -1,13 +1,24 @@
 package storage
 
 import (
-	"errors"
 	"fmt"
 )
 
 var dummyGaugeStorage gaugeStorage
 
 var dummyCounterStorage counterStorage
+
+type InvalidTypeError struct {
+	Type string
+}
+
+func (e *InvalidTypeError) Error() string {
+	return fmt.Sprintf("Invalid type: %v", e.Type)
+}
+
+func throwInvalidTypeError(t string) error {
+	return &InvalidTypeError{Type: t}
+}
 
 func Store(t string, n string, v string) error {
 	if t == "gauge" {
@@ -16,7 +27,7 @@ func Store(t string, n string, v string) error {
 		return update(&dummyCounterStorage, n, v)
 	}
 
-	return errors.New("wrong type: " + t)
+	return throwInvalidTypeError(t)
 }
 
 func Get(t string, n string) (string, error) {
@@ -26,7 +37,7 @@ func Get(t string, n string) (string, error) {
 		return collect(&dummyCounterStorage, n)
 	}
 
-	return "", errors.New("wrong type")
+	return "", throwInvalidTypeError(t)
 }
 
 func Values() (string, error) {

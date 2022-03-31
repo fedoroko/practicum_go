@@ -45,7 +45,7 @@ func TestRouter(t *testing.T) {
 
 	resp, _ = testRequest(t, ts, "GET", "/value/int/alloc")
 	defer resp.Body.Close()
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 
 	resp, _ = testRequest(t, ts, "GET", "/")
 	defer resp.Body.Close()
