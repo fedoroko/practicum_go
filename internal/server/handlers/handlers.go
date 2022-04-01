@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"errors"
-	"github.com/fedoroko/practicum_go/internal/server/storage"
-	"github.com/go-chi/chi/v5"
+
 	"net/http"
+
 	"strings"
+
+	"github.com/go-chi/chi/v5"
+
+	"github.com/fedoroko/practicum_go/internal/server/storage"
 )
 
 type DBHandler struct {

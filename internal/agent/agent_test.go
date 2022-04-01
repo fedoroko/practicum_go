@@ -8,11 +8,12 @@ import (
 
 func TestCollectMemStats(t *testing.T) {
 	t.Run("collected", func(t *testing.T) {
-		count := pollCount
+		count := int64(0)
+		var empty []gStat
 
-		var emptyStats []memStat
-		collectMemStats()
-		assert.NotEqual(t, stats, emptyStats)
-		assert.NotEqual(t, count, pollCount)
+		nonEmpty, newCount := collectMemStats(count)
+
+		assert.NotEqual(t, empty, nonEmpty)
+		assert.NotEqual(t, count, newCount)
 	})
 }

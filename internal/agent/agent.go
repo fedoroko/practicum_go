@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+
 	"log"
 
 	"math/rand"
@@ -35,7 +36,7 @@ func collectMemStats(pollCount int64) ([]gStat, int64) {
 			"Frees", float64(currentStats.Frees), "gauge",
 		},
 		{
-			"GCCPUFraction", float64(currentStats.GCCPUFraction), "gauge",
+			"GCCPUFraction", currentStats.GCCPUFraction, "gauge",
 		},
 		{
 			"GCSys", float64(currentStats.GCSys), "gauge",
@@ -109,12 +110,9 @@ func collectMemStats(pollCount int64) ([]gStat, int64) {
 		{
 			"RandomValue", rand.Float64(), "gauge",
 		},
-		//{
-		//	"PollCount", float64(pollCount), "counter",
-		//},
 	}
 
-	pollCount += 29
+	pollCount += int64(len(stats) - 1)
 
 	return stats, pollCount
 }
@@ -164,16 +162,16 @@ func Run() {
 	defer shutdownTicker.Stop()
 
 	var stats []gStat
-	var pollCount int64 = 28
+	var pollCount int64 = 0
 
 	for {
 		select {
 		case <-collectTicker.C:
 			stats, pollCount = collectMemStats(pollCount)
-
 		case <-sendTicker.C:
-			sendMemStats(stats, pollCount)
-
+			safeStats := stats
+			safePollCount := pollCount
+			sendMemStats(safeStats, safePollCount)
 		case <-shutdownTicker.C:
 			return
 		}

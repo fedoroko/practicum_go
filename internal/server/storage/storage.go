@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+
 	"fmt"
 
 	"strconv"
@@ -81,7 +82,12 @@ func (db *DummyDB) Set(t string, n string, v string) error {
 			return err
 		}
 
-		db.C.Fields[n] = counter(v64)
+		if v, ok := db.C.Fields[n]; ok {
+			db.C.Fields[n] = v + counter(v64)
+		} else {
+			db.C.Fields[n] = counter(v64)
+		}
+
 		return nil
 	}
 
