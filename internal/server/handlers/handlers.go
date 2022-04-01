@@ -1,35 +1,44 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
 )
 
-func IndexFunc(w http.ResponseWriter, r *http.Request) {
+type DBHandler struct {
+	DB storage.Repository
+}
+
+func NewDBHandler(db storage.Repository) *DBHandler {
+	return &DBHandler{
+		DB: db,
+	}
+}
+
+func (h *DBHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 
-	data, err := storage.Values()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	data := h.DB.Display()
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(data))
 }
 
-func UpdateFunc(w http.ResponseWriter, r *http.Request) {
+func (h *DBHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 
 	t := strings.ToLower(chi.URLParam(r, "type"))
 	n := strings.ToLower(chi.URLParam(r, "name"))
 	v := strings.ToLower(chi.URLParam(r, "value"))
 
-	err := storage.Store(t, n, v)
+	var typeErr *storage.InvalidTypeError
+	err := h.DB.Set(t, n, v)
 	if err != nil {
-		switch err.(type) {
-		case *storage.InvalidTypeError:
+		switch {
+		case errors.As(err, &typeErr):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -39,16 +48,17 @@ func UpdateFunc(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetFunc(w http.ResponseWriter, r *http.Request) {
+func (h *DBHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 
 	t := strings.ToLower(chi.URLParam(r, "type"))
 	n := strings.ToLower(chi.URLParam(r, "name"))
 
-	ret, err := storage.Get(t, n)
+	var typeErr *storage.InvalidTypeError
+	ret, err := h.DB.Get(t, n)
 	if err != nil {
-		switch err.(type) {
-		case *storage.InvalidTypeError:
+		switch {
+		case errors.As(err, &typeErr):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusNotFound)

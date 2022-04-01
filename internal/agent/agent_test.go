@@ -1,10 +1,9 @@
 package agent
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
-	// "github.com/stretchr/testify/require"
-	// "fmt"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCollectMemStats(t *testing.T) {

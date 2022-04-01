@@ -2,12 +2,20 @@ package handlers
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5"
+
 	"io"
+
 	"net/http"
+
 	"net/http/httptest"
+
 	"strings"
+
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+
+	"github.com/fedoroko/practicum_go/internal/server/storage"
 )
 
 func TestUpdateFunc(t *testing.T) {
@@ -93,11 +101,13 @@ func TestUpdateFunc(t *testing.T) {
 		},
 	}
 
+	db := storage.Init()
+	h := NewDBHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/update/{type}/{name}/{value}", nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(UpdateFunc)
+			hl := http.HandlerFunc(h.UpdateFunc)
 
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("type", tt.urlParams.Type)
@@ -105,7 +115,7 @@ func TestUpdateFunc(t *testing.T) {
 			rctx.URLParams.Add("value", tt.urlParams.Value)
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
-			h.ServeHTTP(w, request)
+			hl.ServeHTTP(w, request)
 			res := w.Result()
 
 			if res.StatusCode != tt.want.code {
@@ -200,18 +210,21 @@ func TestGetFunc(t *testing.T) {
 		},
 	}
 
+	db := storage.Init()
+	h := NewDBHandler(db)
+	db.Set("gauge", "alloc", "1")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "/value/{type}/{name}", nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GetFunc)
+			hl := http.HandlerFunc(h.GetFunc)
 
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("type", tt.urlParams.Type)
 			rctx.URLParams.Add("name", tt.urlParams.Name)
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
-			h.ServeHTTP(w, request)
+			hl.ServeHTTP(w, request)
 			res := w.Result()
 
 			if res.StatusCode != tt.want.code {
