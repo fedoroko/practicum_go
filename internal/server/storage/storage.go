@@ -2,10 +2,9 @@ package storage
 
 import (
 	"errors"
-
 	"fmt"
-
 	"strconv"
+	"sync"
 )
 
 type Repository interface {
@@ -31,10 +30,12 @@ type gauge float64
 type counter int64
 
 type gaugeStorage struct {
+	Mutex  sync.Mutex
 	Fields map[string]gauge
 }
 
 type counterStorage struct {
+	Mutex  sync.Mutex
 	Fields map[string]counter
 }
 
@@ -53,10 +54,14 @@ func DummyDBInterface(g *gaugeStorage, c *counterStorage) *DummyDB {
 func (db *DummyDB) Get(t string, n string) (string, error) {
 	switch t {
 	case "gauge":
+		db.G.Mutex.Lock()
+		defer db.G.Mutex.Unlock()
 		if v, ok := db.G.Fields[n]; ok {
 			return fmt.Sprintf("%v", v), nil
 		}
 	case "counter":
+		db.C.Mutex.Lock()
+		defer db.C.Mutex.Unlock()
 		if v, ok := db.C.Fields[n]; ok {
 			return fmt.Sprintf("%v", v), nil
 		}
@@ -69,6 +74,9 @@ func (db *DummyDB) Get(t string, n string) (string, error) {
 func (db *DummyDB) Set(t string, n string, v string) error {
 	switch t {
 	case "gauge":
+		db.G.Mutex.Lock()
+		defer db.G.Mutex.Unlock()
+
 		v64, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return err
@@ -77,6 +85,9 @@ func (db *DummyDB) Set(t string, n string, v string) error {
 		return nil
 
 	case "counter":
+		db.C.Mutex.Lock()
+		defer db.C.Mutex.Unlock()
+
 		v64, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err

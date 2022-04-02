@@ -2,15 +2,10 @@ package agent
 
 import (
 	"fmt"
-
 	"log"
-
 	"math/rand"
-
 	"net/http"
-
 	"runtime"
-
 	"time"
 )
 
@@ -163,15 +158,19 @@ func Run() {
 
 	var stats []gStat
 	var pollCount int64 = 0
-
+	ch := make(chan bool, 1)
+	ch <- true
 	for {
 		select {
 		case <-collectTicker.C:
+			<-ch
 			stats, pollCount = collectMemStats(pollCount)
+			ch <- true
+
 		case <-sendTicker.C:
-			safeStats := stats
-			safePollCount := pollCount
-			sendMemStats(safeStats, safePollCount)
+			<-ch
+			sendMemStats(stats, pollCount)
+			ch <- true
 		case <-shutdownTicker.C:
 			return
 		}

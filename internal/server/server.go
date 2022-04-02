@@ -1,16 +1,14 @@
 package server
 
 import (
-	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"log"
-
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/fedoroko/practicum_go/internal/server/handlers"
+	"github.com/fedoroko/practicum_go/internal/server/storage"
 )
 
 func Run() {

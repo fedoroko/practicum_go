@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"errors"
-
 	"net/http"
-
 	"strings"
 
 	"github.com/go-chi/chi/v5"
