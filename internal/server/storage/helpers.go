@@ -19,7 +19,7 @@ func throwInvalidTypeError(t string) error {
 }
 
 type Metrics struct {
-	Id    string   `json:"id"`
+	ID    string   `json:"id"`
 	MType string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
@@ -30,7 +30,7 @@ type input func() (*Metrics, error)
 func Raw(t string, n string) input {
 	return func() (*Metrics, error) {
 		return &Metrics{
-			Id:    n,
+			ID:    n,
 			MType: t,
 		}, nil
 	}
@@ -39,7 +39,7 @@ func Raw(t string, n string) input {
 func RawWithValue(t string, n string, v string) input {
 	return func() (*Metrics, error) {
 		m := Metrics{
-			Id:    n,
+			ID:    n,
 			MType: t,
 		}
 		switch t {

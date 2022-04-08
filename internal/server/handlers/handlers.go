@@ -123,7 +123,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 		case errors.As(err, &typeErr):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, err.Error(), http.StatusNoContent)
 		}
 	}
 

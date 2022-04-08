@@ -39,7 +39,7 @@ func (r *repo) Get(i input, o output) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	n := strings.ToLower(m.Id)
+	n := strings.ToLower(m.ID)
 	switch m.MType {
 	case "gauge":
 		r.gMtx.Lock()
@@ -72,7 +72,7 @@ func (r *repo) Set(i input) error {
 		return err
 	}
 
-	n := strings.ToLower(m.Id)
+	n := strings.ToLower(m.ID)
 	switch m.MType {
 	case "gauge":
 		if m.Value == nil {
