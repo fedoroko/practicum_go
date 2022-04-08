@@ -34,7 +34,7 @@ func Test_stats_collect(t *testing.T) {
 	type fields struct {
 		metrics []metric
 		count   int64
-		mtx     sync.RWMutex
+		mtx     *sync.RWMutex
 		done    chan struct{}
 		cfg     *config
 	}
@@ -58,11 +58,13 @@ func Test_stats_collect(t *testing.T) {
 			s := &stats{
 				metrics: tt.fields.metrics,
 				count:   tt.fields.count,
-				mtx:     tt.fields.mtx,
+				mtx:     sync.RWMutex{},
 				done:    tt.fields.done,
 				cfg:     tt.fields.cfg,
 			}
-			empty := *s
+			empty := &stats{
+				metrics: []metric{},
+			}
 
 			go s.collect()
 			time.Sleep(s.cfg.shutdownInterval * time.Second)

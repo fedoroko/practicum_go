@@ -59,9 +59,9 @@ func Test_repoInterface(t *testing.T) {
 func Test_repo_Get(t *testing.T) {
 	type fields struct {
 		g    map[string]gauge
-		gMtx sync.RWMutex
+		gMtx *sync.RWMutex
 		c    map[string]counter
-		cMtx sync.RWMutex
+		cMtx *sync.RWMutex
 	}
 	type args struct {
 		i input
@@ -163,9 +163,9 @@ func Test_repo_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &repo{
 				g:    tt.fields.g,
-				gMtx: tt.fields.gMtx,
+				gMtx: sync.RWMutex{},
 				c:    tt.fields.c,
-				cMtx: tt.fields.cMtx,
+				cMtx: sync.RWMutex{},
 			}
 			got, err := r.Get(tt.args.i, tt.args.o)
 			if tt.wantErr {

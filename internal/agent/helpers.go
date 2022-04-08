@@ -13,7 +13,7 @@ import (
 )
 
 type metric struct {
-	Id    string  `json:"id"`
+	ID    string  `json:"id"`
 	MType string  `json:"type"`
 	Delta int64   `json:"delta"`
 	Value float64 `json:"value"`
@@ -58,142 +58,142 @@ func (s *stats) collect() {
 				defer s.mtx.RUnlock()
 				s.metrics = []metric{
 					{
-						Id:    "Alloc",
+						ID:    "Alloc",
 						MType: "gauge",
 						Value: float64(currentStats.Alloc),
 					},
 					{
-						Id:    "BuckHashSys",
+						ID:    "BuckHashSys",
 						MType: "gauge",
 						Value: float64(currentStats.BuckHashSys),
 					},
 					{
-						Id:    "Frees",
+						ID:    "Frees",
 						MType: "gauge",
 						Value: float64(currentStats.Frees),
 					},
 					{
-						Id:    "GCCPUFraction",
+						ID:    "GCCPUFraction",
 						MType: "gauge",
 						Value: currentStats.GCCPUFraction,
 					},
 					{
-						Id:    "GCSys",
+						ID:    "GCSys",
 						MType: "gauge",
 						Value: float64(currentStats.GCSys),
 					},
 					{
-						Id:    "HeapAlloc",
+						ID:    "HeapAlloc",
 						MType: "gauge",
 						Value: float64(currentStats.HeapAlloc),
 					},
 					{
-						Id:    "HeapIdle",
+						ID:    "HeapIdle",
 						MType: "gauge",
 						Value: float64(currentStats.HeapIdle),
 					},
 					{
-						Id:    "HeapInuse",
+						ID:    "HeapInuse",
 						MType: "gauge",
 						Value: float64(currentStats.HeapInuse),
 					},
 					{
-						Id:    "HeapObjects",
+						ID:    "HeapObjects",
 						MType: "gauge",
 						Value: float64(currentStats.HeapObjects),
 					},
 					{
-						Id:    "HeapReleased",
+						ID:    "HeapReleased",
 						MType: "gauge",
 						Value: float64(currentStats.HeapReleased),
 					},
 					{
-						Id:    "HeapSys",
+						ID:    "HeapSys",
 						MType: "gauge",
 						Value: float64(currentStats.HeapSys),
 					},
 					{
-						Id:    "LastGC",
+						ID:    "LastGC",
 						MType: "gauge",
 						Value: float64(currentStats.LastGC),
 					},
 					{
-						Id:    "Lookups",
+						ID:    "Lookups",
 						MType: "gauge",
 						Value: float64(currentStats.Lookups),
 					},
 					{
-						Id:    "MCacheInuse",
+						ID:    "MCacheInuse",
 						MType: "gauge",
 						Value: float64(currentStats.MCacheInuse),
 					},
 					{
-						Id:    "MCacheSys",
+						ID:    "MCacheSys",
 						MType: "gauge",
 						Value: float64(currentStats.MCacheSys),
 					},
 					{
-						Id:    "MSpanInuse",
+						ID:    "MSpanInuse",
 						MType: "gauge",
 						Value: float64(currentStats.MSpanInuse),
 					},
 					{
-						Id:    "MSpanSys",
+						ID:    "MSpanSys",
 						MType: "gauge",
 						Value: float64(currentStats.MSpanSys),
 					},
 					{
-						Id:    "Mallocs",
+						ID:    "Mallocs",
 						MType: "gauge",
 						Value: float64(currentStats.Mallocs),
 					},
 					{
-						Id:    "NextGC",
+						ID:    "NextGC",
 						MType: "gauge",
 						Value: float64(currentStats.NextGC),
 					},
 					{
-						Id:    "NumForcedGC",
+						ID:    "NumForcedGC",
 						MType: "gauge",
 						Value: float64(currentStats.NumForcedGC),
 					},
 					{
-						Id:    "NumGC",
+						ID:    "NumGC",
 						MType: "gauge",
 						Value: float64(currentStats.NumGC),
 					},
 					{
-						Id:    "OtherSys",
+						ID:    "OtherSys",
 						MType: "gauge",
 						Value: float64(currentStats.OtherSys),
 					},
 					{
-						Id:    "PauseTotalNs",
+						ID:    "PauseTotalNs",
 						MType: "gauge",
 						Value: float64(currentStats.PauseTotalNs),
 					},
 					{
-						Id:    "StackInuse",
+						ID:    "StackInuse",
 						MType: "gauge",
 						Value: float64(currentStats.StackInuse),
 					},
 					{
-						Id:    "StackSys",
+						ID:    "StackSys",
 						MType: "gauge",
 						Value: float64(currentStats.StackSys),
 					},
 					{
-						Id:    "Sys",
+						ID:    "Sys",
 						MType: "gauge",
 						Value: float64(currentStats.Sys),
 					},
 					{
-						Id:    "TotalAlloc",
+						ID:    "TotalAlloc",
 						MType: "gauge",
 						Value: float64(currentStats.TotalAlloc),
 					},
 					{
-						Id:    "RandomValue",
+						ID:    "RandomValue",
 						MType: "gauge",
 						Value: rand.Float64(),
 					},
@@ -201,7 +201,7 @@ func (s *stats) collect() {
 
 				s.count += int64(len(s.metrics) - 1)
 				s.metrics = append(s.metrics, metric{
-					Id:    "PollCount",
+					ID:    "PollCount",
 					MType: "counter",
 					Delta: s.count,
 				})
@@ -232,7 +232,7 @@ func (s *stats) send() {
 
 func requestHandler(c *http.Client, cfg *config, m metric) {
 	switch cfg.contentType {
-	case ContentTypeJson:
+	case ContentTypeJSON:
 		jsonRequest(c, cfg, m)
 	default:
 		plainRequest(c, cfg, m)
@@ -250,7 +250,7 @@ func jsonRequest(c *http.Client, cfg *config, m metric) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	request.Header.Set("Content-Type", ContentTypeJson)
+	request.Header.Set("Content-Type", ContentTypeJSON)
 
 	response, err := c.Do(request)
 	if err != nil {
@@ -265,7 +265,7 @@ func jsonRequest(c *http.Client, cfg *config, m metric) {
 }
 
 func plainRequest(c *http.Client, cfg *config, m metric) {
-	url := cfg.endpoint + "/update/" + m.MType + "/" + m.Id + "/"
+	url := cfg.endpoint + "/update/" + m.MType + "/" + m.ID + "/"
 	switch m.MType {
 	case "counter":
 		url += fmt.Sprintf("%v", m.Delta)

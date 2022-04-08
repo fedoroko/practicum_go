@@ -39,7 +39,7 @@ func WithEndpoint(addr string) option {
 }
 
 const (
-	ContentTypeJson  = "application/json"
+	ContentTypeJSON  = "application/json"
 	ContentTypePlain = "text.plain"
 )
 

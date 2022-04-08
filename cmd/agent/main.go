@@ -7,6 +7,6 @@ func main() {
 		agent.WithPollInterval(2),
 		agent.WithReportInterval(10),
 		agent.WithShutdownInterval(500),
-		agent.WithContentType(agent.ContentTypeJson),
+		agent.WithContentType(agent.ContentTypeJSON),
 	)
 }

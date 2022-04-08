@@ -60,7 +60,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println(string(b))
+
 	err = h.r.Set(
 		storage.FromJSON(b),
 	)
@@ -112,7 +112,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-
+	fmt.Println(string(b), r.Header.Get("content-type"))
 	ret, err := h.r.Get(
 		storage.FromJSON(b),
 		storage.ToJSON(),
