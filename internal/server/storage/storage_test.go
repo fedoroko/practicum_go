@@ -1,91 +1,71 @@
 package storage
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"reflect"
+	"sync"
+	"testing"
 )
 
-func TestDummyDBInterface(t *testing.T) {
-	type args struct {
-		g *gaugeStorage
-		c *counterStorage
-	}
+func TestInit(t *testing.T) {
 	tests := []struct {
 		name string
-		args args
-		want *DummyDB
+		want Repository
 	}{
 		{
 			name: "positive",
-			args: args{
-				g: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				c: &counterStorage{
-					Fields: map[string]counter{},
-				},
-			},
-			want: &DummyDB{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
-				},
+			want: &repo{
+				g:    make(map[string]gauge),
+				gMtx: sync.RWMutex{},
+				c:    make(map[string]counter),
+				cMtx: sync.RWMutex{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, DummyDBInterface(tt.args.g, tt.args.c), "DummyDBInterface(%v, %v)", tt.args.g, tt.args.c)
-		})
-	}
-}
-
-func TestDummyDB_Display(t *testing.T) {
-	type fields struct {
-		G *gaugeStorage
-		C *counterStorage
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		{
-			name: "positive",
-			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{
-						"alloc": gauge(1),
-					},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db := &DummyDB{
-				G: tt.fields.G,
-				C: tt.fields.C,
+			if got := Init(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Init() = %v, want %v", got, tt.want)
 			}
-			assert.NotEqual(t, "", db.Display(), "Display()")
 		})
 	}
 }
 
-func TestDummyDB_Get(t *testing.T) {
+func Test_repoInterface(t *testing.T) {
+	tests := []struct {
+		name string
+		want *repo
+	}{
+		{
+			name: "positive",
+			want: &repo{
+				g:    make(map[string]gauge),
+				gMtx: sync.RWMutex{},
+				c:    make(map[string]counter),
+				cMtx: sync.RWMutex{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := repoInterface(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("repoInterface() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_repo_Get(t *testing.T) {
 	type fields struct {
-		G *gaugeStorage
-		C *counterStorage
+		g    map[string]gauge
+		gMtx sync.RWMutex
+		c    map[string]counter
+		cMtx sync.RWMutex
 	}
 	type args struct {
-		t string
-		n string
+		i input
+		o output
 	}
 	tests := []struct {
 		name    string
@@ -95,184 +75,202 @@ func TestDummyDB_Get(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "positive",
+			name: "positive plain",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{
-						"alloc": gauge(1),
-					},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "gauge",
-				n: "alloc",
+				i: Raw("gauge", "Alloc"),
+				o: Plain(),
 			},
 			want:    "1",
 			wantErr: false,
 		},
 		{
-			name: "wrong type",
+			name: "wrong type plain",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{
-						"alloc": gauge(1),
-					},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "int",
-				n: "alloc",
+				i: Raw("int", "Alloc"),
+				o: Plain(),
 			},
 			want:    "",
 			wantErr: true,
 		},
 		{
-			name: "wrong key",
+			name: "wrong name plain",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{
-						"alloc": gauge(1),
-					},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "gauge",
-				n: "bulloc",
+				i: Raw("gauge", "alloc"),
+				o: Plain(),
 			},
 			want:    "",
 			wantErr: true,
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db := &DummyDB{
-				G: tt.fields.G,
-				C: tt.fields.C,
-			}
-			got, err := db.Get(tt.args.t, tt.args.n)
-			assert.Equal(t, tt.want, got)
-			if !tt.wantErr {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-			}
-		})
-	}
-}
-
-func TestDummyDB_Set(t *testing.T) {
-	type fields struct {
-		G *gaugeStorage
-		C *counterStorage
-	}
-	type args struct {
-		t string
-		n string
-		v string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
 		{
-			name: "positive",
+			name: "positive json",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "gauge",
-				n: "alloc",
-				v: "1",
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\"}")),
+				o: ToJSON(),
 			},
+			want:    "{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":1}",
 			wantErr: false,
 		},
 		{
-			name: "wrong type",
+			name: "wrong type json",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "int",
-				n: "alloc",
-				v: "1",
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"int\"}")),
+				o: ToJSON(),
 			},
+			want:    "",
 			wantErr: true,
 		},
 		{
-			name: "wrong value",
+			name: "wrong name json",
 			fields: fields{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
+				g: map[string]gauge{
+					"Alloc": gauge(1),
 				},
 			},
 			args: args{
-				t: "gauge",
-				n: "alloc",
-				v: "none",
+				i: FromJSON([]byte("{\"id\":\"alloc\",\"type\":\"gauge\"}")),
+				o: ToJSON(),
 			},
+			want:    "",
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db := &DummyDB{
-				G: tt.fields.G,
-				C: tt.fields.C,
+			r := &repo{
+				g:    tt.fields.g,
+				gMtx: tt.fields.gMtx,
+				c:    tt.fields.c,
+				cMtx: tt.fields.cMtx,
 			}
-			err := db.Set(tt.args.t, tt.args.n, tt.args.v)
+			got, err := r.Get(tt.args.i, tt.args.o)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestInit(t *testing.T) {
+func Test_repo_List(t *testing.T) {
 	tests := []struct {
 		name string
-		want *DummyDB
 	}{
 		{
 			name: "positive",
-			want: &DummyDB{
-				G: &gaugeStorage{
-					Fields: map[string]gauge{},
-				},
-				C: &counterStorage{
-					Fields: map[string]counter{},
-				},
-			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, Init(), "Init()")
+			r := Init()
+			got := r.List()
+			assert.NotEqual(t, "", got)
+		})
+	}
+}
+
+func Test_repo_Set(t *testing.T) {
+	type args struct {
+		i input
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "positive plain",
+			args: args{
+				i: RawWithValue("gauge", "Alloc", "1"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "wrong type plain",
+			args: args{
+				i: RawWithValue("int", "Alloc", "1"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty value plain",
+			args: args{
+				i: RawWithValue("gauge", "Alloc", ""),
+			},
+			wantErr: true,
+		},
+		{
+			name: "non numeric value plain",
+			args: args{
+				i: RawWithValue("gauge", "Alloc", "none"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "positive json",
+			args: args{
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":1}")),
+			},
+			wantErr: false,
+		},
+		{
+			name: "wrong type json",
+			args: args{
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"int\",\"value\":1}")),
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty value json",
+			args: args{
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\"}")),
+			},
+			wantErr: true,
+		},
+		{
+			name: "non numeric value json",
+			args: args{
+				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":\"none\"}")),
+			},
+			wantErr: true,
+		},
+	}
+	r := Init()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := r.Set(tt.args.i)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

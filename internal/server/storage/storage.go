@@ -3,129 +3,118 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 )
 
+// Repository не хочется плодить методы для разных типов контента, решил экспериментировать с оцпиями
 type Repository interface {
-	Get(t string, n string) (string, error)
-	Set(t string, n string, v string) error
-	Display() string
-}
-
-type InvalidTypeError struct {
-	Type string
-}
-
-func (e *InvalidTypeError) Error() string {
-	return fmt.Sprintf("Invalid type: %v", e.Type)
-}
-
-func throwInvalidTypeError(t string) error {
-	return &InvalidTypeError{Type: t}
+	Get(i input, o output) (string, error)
+	Set(i input) error
+	List() string
 }
 
 type gauge float64
 
 type counter int64
 
-type gaugeStorage struct {
-	Mutex  sync.Mutex
-	Fields map[string]gauge
+type repo struct {
+	g    map[string]gauge
+	gMtx sync.RWMutex
+	c    map[string]counter
+	cMtx sync.RWMutex
 }
 
-type counterStorage struct {
-	Mutex  sync.Mutex
-	Fields map[string]counter
-}
-
-type DummyDB struct {
-	G *gaugeStorage
-	C *counterStorage
-}
-
-func DummyDBInterface(g *gaugeStorage, c *counterStorage) *DummyDB {
-	return &DummyDB{
-		G: g,
-		C: c,
+func repoInterface() *repo {
+	return &repo{
+		g:    make(map[string]gauge),
+		gMtx: sync.RWMutex{},
+		c:    make(map[string]counter),
+		cMtx: sync.RWMutex{},
 	}
 }
 
-func (db *DummyDB) Get(t string, n string) (string, error) {
-	switch t {
+func (r *repo) Get(i input, o output) (string, error) {
+	m, err := i()
+	if err != nil {
+		return "", err
+	}
+
+	switch m.MType {
 	case "gauge":
-		db.G.Mutex.Lock()
-		defer db.G.Mutex.Unlock()
-		if v, ok := db.G.Fields[n]; ok {
-			return fmt.Sprintf("%v", v), nil
+		r.gMtx.Lock()
+		defer r.gMtx.Unlock()
+		if v, ok := r.g[m.Id]; ok {
+			z := float64(v)
+			m.Value = &z
+			return o(m), nil
 		}
+
 	case "counter":
-		db.C.Mutex.Lock()
-		defer db.C.Mutex.Unlock()
-		if v, ok := db.C.Fields[n]; ok {
-			return fmt.Sprintf("%v", v), nil
+		r.cMtx.Lock()
+		defer r.cMtx.Unlock()
+		if v, ok := r.c[m.Id]; ok {
+			z := int64(v)
+			m.Delta = &z
+			return o(m), nil
 		}
+
 	default:
-		return "", throwInvalidTypeError(t)
+		return "", throwInvalidTypeError(m.MType)
 	}
+
 	return "", errors.New("not found")
 }
 
-func (db *DummyDB) Set(t string, n string, v string) error {
-	switch t {
+func (r *repo) Set(i input) error {
+	m, err := i()
+	if err != nil {
+		return err
+	}
+	switch m.MType {
 	case "gauge":
-		db.G.Mutex.Lock()
-		defer db.G.Mutex.Unlock()
-
-		v64, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			return err
+		if m.Value == nil {
+			return errors.New("bad")
 		}
-		db.G.Fields[n] = gauge(v64)
+		r.gMtx.RLock()
+		defer r.gMtx.RUnlock()
+
+		r.g[m.Id] = gauge(*m.Value)
 		return nil
 
 	case "counter":
-		db.C.Mutex.Lock()
-		defer db.C.Mutex.Unlock()
+		r.cMtx.RLock()
+		defer r.cMtx.RUnlock()
 
-		v64, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return err
-		}
-
-		if v, ok := db.C.Fields[n]; ok {
-			db.C.Fields[n] = v + counter(v64)
+		if v, ok := r.c[m.Id]; ok {
+			r.c[m.Id] = v + counter(*m.Delta)
 		} else {
-			db.C.Fields[n] = counter(v64)
+			r.c[m.Id] = counter(*m.Delta)
 		}
 
 		return nil
 	}
 
-	return throwInvalidTypeError(t)
+	return throwInvalidTypeError(m.MType)
 }
 
-func (db *DummyDB) Display() string {
+func (r *repo) List() string {
 	ret := "Known values:\n"
-	for n := range db.G.Fields {
-		v, _ := db.Get("gauge", n)
-		ret += fmt.Sprintf("%s - %s\n", n, v)
+	r.gMtx.Lock()
+	defer r.gMtx.Unlock()
+	for n, v := range r.g {
+		ret += fmt.Sprintf("%s - %v\n", n, v)
 	}
-	for n := range db.C.Fields {
-		v, _ := db.Get("counter", n)
-		ret += fmt.Sprintf("%s - %s\n", n, v)
+
+	r.cMtx.Lock()
+	defer r.cMtx.Unlock()
+	for n, v := range r.c {
+		ret += fmt.Sprintf("%s - %v\n", n, v)
 	}
 
 	return ret
 }
 
-func Init() *DummyDB {
-	g := &gaugeStorage{
-		Fields: make(map[string]gauge),
-	}
-	c := &counterStorage{
-		Fields: make(map[string]counter),
-	}
-	db := DummyDBInterface(g, c)
+func Init() Repository {
+	db := repoInterface()
 	return db
 }

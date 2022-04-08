@@ -31,11 +31,17 @@ func router() chi.Router {
 	r.Use(middleware.Logger)
 
 	db := storage.Init()
-	h := handlers.NewDBHandler(db)
+	h := handlers.NewRepoHandler(db)
 
 	r.Get("/", h.IndexFunc)
-	r.Get("/value/{type}/{name}", h.GetFunc)
-	r.Post("/update/{type}/{name}/{value}", h.UpdateFunc)
+	r.Route("/value", func(r chi.Router) {
+		r.Post("/", h.GetJSONFunc)
+		r.Get("/{type}/{name}", h.GetFunc)
+	})
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", h.UpdateJSONFunc)
+		r.Post("/{type}/{name}/{value}", h.UpdateFunc)
+	})
 
 	return r
 }
