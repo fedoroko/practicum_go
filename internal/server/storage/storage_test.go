@@ -78,7 +78,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "positive plain",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
@@ -92,7 +92,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong type plain",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
@@ -106,11 +106,11 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong name plain",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
-				i: Raw("gauge", "alloc"),
+				i: Raw("gauge", "zlloc"),
 				o: Plain(),
 			},
 			want:    "",
@@ -120,7 +120,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "positive json",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
@@ -134,7 +134,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong type json",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
@@ -148,11 +148,11 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong name json",
 			fields: fields{
 				g: map[string]gauge{
-					"Alloc": gauge(1),
+					"alloc": gauge(1),
 				},
 			},
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"alloc\",\"type\":\"gauge\"}")),
+				i: FromJSON([]byte("{\"id\":\"zlloc\",\"type\":\"gauge\"}")),
 				o: ToJSON(),
 			},
 			want:    "",

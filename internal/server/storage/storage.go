@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -38,12 +39,12 @@ func (r *repo) Get(i input, o output) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	n := strings.ToLower(m.Id)
 	switch m.MType {
 	case "gauge":
 		r.gMtx.Lock()
 		defer r.gMtx.Unlock()
-		if v, ok := r.g[m.Id]; ok {
+		if v, ok := r.g[n]; ok {
 			z := float64(v)
 			m.Value = &z
 			return o(m), nil
@@ -52,7 +53,7 @@ func (r *repo) Get(i input, o output) (string, error) {
 	case "counter":
 		r.cMtx.Lock()
 		defer r.cMtx.Unlock()
-		if v, ok := r.c[m.Id]; ok {
+		if v, ok := r.c[n]; ok {
 			z := int64(v)
 			m.Delta = &z
 			return o(m), nil
@@ -70,6 +71,8 @@ func (r *repo) Set(i input) error {
 	if err != nil {
 		return err
 	}
+
+	n := strings.ToLower(m.Id)
 	switch m.MType {
 	case "gauge":
 		if m.Value == nil {
@@ -78,17 +81,17 @@ func (r *repo) Set(i input) error {
 		r.gMtx.RLock()
 		defer r.gMtx.RUnlock()
 
-		r.g[m.Id] = gauge(*m.Value)
+		r.g[n] = gauge(*m.Value)
 		return nil
 
 	case "counter":
 		r.cMtx.RLock()
 		defer r.cMtx.RUnlock()
 
-		if v, ok := r.c[m.Id]; ok {
-			r.c[m.Id] = v + counter(*m.Delta)
+		if v, ok := r.c[n]; ok {
+			r.c[n] = v + counter(*m.Delta)
 		} else {
-			r.c[m.Id] = counter(*m.Delta)
+			r.c[n] = counter(*m.Delta)
 		}
 
 		return nil

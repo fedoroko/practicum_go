@@ -137,7 +137,7 @@ func Test_repoHandler_GetJSONFunc(t *testing.T) {
 		},
 		{
 			name: "wrong key",
-			body: "{\"id\":\"alloc\",\"type\":\"gauge\"}",
+			body: "{\"id\":\"zlloc\",\"type\":\"gauge\"}",
 			want: want{
 				code:        404,
 				body:        "not found",
