@@ -247,6 +247,7 @@ func jsonRequest(c *http.Client, cfg *config, m metric) {
 	}
 
 	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	request.Close = true
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -274,6 +275,7 @@ func plainRequest(c *http.Client, cfg *config, m metric) {
 	}
 
 	request, err := http.NewRequest(http.MethodPost, url, nil)
+	request.Close = true
 	if err != nil {
 		log.Fatal(err)
 	}
