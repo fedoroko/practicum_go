@@ -1,11 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/go-chi/chi/v5"
-	"io"
 	"net/http"
 )
 
@@ -54,15 +53,16 @@ func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain")
+	decoder := json.NewDecoder(r.Body)
+	m := storage.Metrics{}
 
-	b, err := io.ReadAll(r.Body)
+	err := decoder.Decode(&m)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	err = h.r.Set(
-		storage.FromJSON(b),
+		storage.FromMetric(&m),
 	)
 
 	var typeErr *storage.InvalidTypeError
@@ -76,6 +76,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(""))
 }
@@ -106,15 +107,15 @@ func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	decoder := json.NewDecoder(r.Body)
+	m := storage.Metrics{}
 
-	b, err := io.ReadAll(r.Body)
+	err := decoder.Decode(&m)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println(string(b), r.Header.Get("content-type"))
 	ret, err := h.r.Get(
-		storage.FromJSON(b),
+		storage.FromMetric(&m),
 		storage.ToJSON(),
 	)
 
@@ -128,6 +129,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(ret))
 }

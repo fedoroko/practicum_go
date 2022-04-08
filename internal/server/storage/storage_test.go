@@ -124,7 +124,10 @@ func Test_repo_Get(t *testing.T) {
 				},
 			},
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\"}")),
+				i: FromMetric(&Metrics{
+					ID:    "Alloc",
+					MType: "gauge",
+				}),
 				o: ToJSON(),
 			},
 			want:    "{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":1}",
@@ -138,7 +141,10 @@ func Test_repo_Get(t *testing.T) {
 				},
 			},
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"int\"}")),
+				i: FromMetric(&Metrics{
+					ID:    "Alloc",
+					MType: "int",
+				}),
 				o: ToJSON(),
 			},
 			want:    "",
@@ -152,7 +158,10 @@ func Test_repo_Get(t *testing.T) {
 				},
 			},
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"zlloc\",\"type\":\"gauge\"}")),
+				i: FromMetric(&Metrics{
+					ID:    "Zlloc",
+					MType: "gauge",
+				}),
 				o: ToJSON(),
 			},
 			want:    "",
@@ -197,6 +206,7 @@ func Test_repo_List(t *testing.T) {
 }
 
 func Test_repo_Set(t *testing.T) {
+	dummy := float64(1)
 	type args struct {
 		i input
 	}
@@ -236,28 +246,33 @@ func Test_repo_Set(t *testing.T) {
 		{
 			name: "positive json",
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":1}")),
+				i: FromMetric(&Metrics{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: &dummy,
+				}),
 			},
 			wantErr: false,
 		},
 		{
 			name: "wrong type json",
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"int\",\"value\":1}")),
+				i: FromMetric(&Metrics{
+					ID:    "Alloc",
+					MType: "int",
+					Value: &dummy,
+				}),
 			},
 			wantErr: true,
 		},
 		{
 			name: "empty value json",
 			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\"}")),
-			},
-			wantErr: true,
-		},
-		{
-			name: "non numeric value json",
-			args: args{
-				i: FromJSON([]byte("{\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":\"none\"}")),
+				i: FromMetric(&Metrics{
+					ID:    "Alloc",
+					MType: "gauge",
+					Value: nil,
+				}),
 			},
 			wantErr: true,
 		},

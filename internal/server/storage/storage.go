@@ -35,7 +35,6 @@ func repoInterface() *repo {
 }
 
 func (r *repo) Get(i input, o output) (string, error) {
-	fmt.Println(r.g, r.c)
 	m, err := i()
 	if err != nil {
 		return "", err

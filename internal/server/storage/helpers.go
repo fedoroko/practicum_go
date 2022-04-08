@@ -61,15 +61,9 @@ func RawWithValue(t string, n string, v string) input {
 	}
 }
 
-func FromJSON(b []byte) input {
+func FromMetric(m *Metrics) input {
 	return func() (*Metrics, error) {
-		m := Metrics{}
-		err := json.Unmarshal(b, &m)
-		if err != nil {
-			return &m, err
-		}
-
-		return &m, nil
+		return m, nil
 	}
 }
 
