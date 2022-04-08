@@ -240,7 +240,7 @@ func requestHandler(c *http.Client, cfg *config, m metric) {
 }
 
 func jsonRequest(c *http.Client, cfg *config, m metric) {
-	url := cfg.endpoint + "/update/"
+	url := cfg.endpoint + "/update"
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Fatal(err)

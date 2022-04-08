@@ -55,7 +55,7 @@ func Run(opts ...option) {
 		reportInterval:   10,
 		shutdownInterval: 200,
 		contentType:      ContentTypePlain,
-		endpoint:         "http://127.0.0.1:8080",
+		endpoint:         "http://localhost:8080",
 	}
 
 	for _, o := range opts {
