@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -111,6 +112,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+	fmt.Println(string(b))
 
 	ret, err := h.r.Get(
 		storage.FromJSON(b),
@@ -123,7 +125,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 		case errors.As(err, &typeErr):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
-			http.Error(w, err.Error(), http.StatusNoContent)
+			http.Error(w, err.Error(), http.StatusNotFound)
 		}
 	}
 
