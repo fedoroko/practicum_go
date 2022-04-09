@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,6 +9,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 type metric struct {
@@ -211,7 +212,12 @@ func (s *stats) collect() {
 }
 
 func (s *stats) send() {
-	client := &http.Client{}
+	client := resty.New()
+	client.
+		SetRetryCount(3).
+		SetRetryWaitTime(20 * time.Second).
+		SetRetryMaxWaitTime(100 * time.Second)
+
 	sendTicker := time.NewTicker(s.cfg.reportInterval * time.Second)
 	defer sendTicker.Stop()
 	for {
@@ -230,7 +236,7 @@ func (s *stats) send() {
 	}
 }
 
-func requestHandler(c *http.Client, cfg *config, m metric) {
+func requestHandler(c *resty.Client, cfg *config, m metric) {
 	switch cfg.contentType {
 	case ContentTypeJSON:
 		jsonRequest(c, cfg, m)
@@ -239,33 +245,28 @@ func requestHandler(c *http.Client, cfg *config, m metric) {
 	}
 }
 
-func jsonRequest(c *http.Client, cfg *config, m metric) {
+func jsonRequest(c *resty.Client, cfg *config, m metric) {
 	url := cfg.endpoint + "/update"
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
-	request.Close = true
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypeJSON).
+		SetBody(data).
+		Post(url)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	request.Header.Set("Content-Type", ContentTypeJSON)
 
-	response, err := c.Do(request)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
+	if resp.StatusCode() != http.StatusOK {
 		log.Fatal("Wrong Status Code")
 	}
 }
 
-func plainRequest(c *http.Client, cfg *config, m metric) {
+func plainRequest(c *resty.Client, cfg *config, m metric) {
 	url := cfg.endpoint + "/update/" + m.MType + "/" + m.ID + "/"
 	switch m.MType {
 	case "counter":
@@ -274,21 +275,14 @@ func plainRequest(c *http.Client, cfg *config, m metric) {
 		url += fmt.Sprintf("%v", m.Value)
 	}
 
-	request, err := http.NewRequest(http.MethodPost, url, nil)
-	request.Close = true
-	if err != nil {
-		log.Fatal(err)
-	}
-	request.Header.Set("Content-Type", "text/plain")
-
-	response, err := c.Do(request)
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypePlain).
+		Post(url)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
+	if resp.StatusCode() != http.StatusOK {
 		log.Fatal("Wrong Status Code")
 	}
 }
