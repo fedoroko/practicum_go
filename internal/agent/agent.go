@@ -1,6 +1,9 @@
 package agent
 
 import (
+	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -49,6 +52,35 @@ func WithContentType(contentType string) option {
 	}
 }
 
+func WithEnv() option {
+	a := "http://127.0.0.1:8080"
+	p := time.Duration(2)
+	r := time.Duration(10)
+	address := os.Getenv("ADDRESS")
+	pollInterval := os.Getenv("POLL_INTERVAL")
+	reportInterval := os.Getenv("REPORT_INTERVAL")
+	if address != "" {
+		a = "http://" + address
+	}
+	if pollInterval != "" {
+		i, err := strconv.ParseInt(pollInterval, 10, 64)
+		if err == nil {
+			p = time.Duration(i)
+		}
+	}
+	if reportInterval != "" {
+		i, err := strconv.ParseInt(reportInterval, 10, 64)
+		if err == nil {
+			r = time.Duration(i)
+		}
+	}
+	return func(c *config) {
+		c.endpoint = a
+		c.pollInterval = p
+		c.reportInterval = r
+	}
+}
+
 func Run(opts ...option) {
 	cfg := &config{
 		pollInterval:     2,
@@ -61,7 +93,7 @@ func Run(opts ...option) {
 	for _, o := range opts {
 		o(cfg)
 	}
-
+	fmt.Println(cfg)
 	s := newStats(cfg)
 
 	go s.collect()
