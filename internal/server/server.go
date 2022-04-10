@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,9 +12,32 @@ import (
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 )
 
-func Run() {
+type config struct {
+	address string
+}
+
+type option func(*config)
+
+func WithEnv() option {
+	a := "127.0.0.1:8080"
+	address := os.Getenv("ADDRESS")
+	if address != "" {
+		a = address
+	}
+	return func(c *config) {
+		c.address = a
+	}
+}
+
+func Run(opts ...option) {
+	cfg := &config{
+		address: "127.0.0.1:8080",
+	}
+	for _, o := range opts {
+		o(cfg)
+	}
 	r := router()
-	address := "127.0.0.1:8080"
+	address := cfg.address
 	server := &http.Server{
 		Addr:    address,
 		Handler: r,
