@@ -3,8 +3,9 @@ package server
 import (
 	"log"
 	"net/http"
-	"os"
+	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -13,33 +14,38 @@ import (
 )
 
 type config struct {
-	address string
+	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	Restore       bool          `env:"RESTORE" envDefault:"true"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
+	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 }
 
 type option func(*config)
 
 func WithEnv() option {
-	a := "127.0.0.1:8080"
-	address := os.Getenv("ADDRESS")
-	if address != "" {
-		a = address
-	}
-	return func(c *config) {
-		c.address = a
+	return func(cfg *config) {
+		err := env.Parse(cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 func Run(opts ...option) {
 	cfg := &config{
-		address: "127.0.0.1:8080",
+		Address:       "127.0.0.1:8080",
+		Restore:       true,
+		StoreInterval: 300 * time.Second,
+		StoreFile:     "/tmp/devops-metrics-db.json",
 	}
 	for _, o := range opts {
 		o(cfg)
 	}
+
 	r := router()
-	address := cfg.address
+
 	server := &http.Server{
-		Addr:    address,
+		Addr:    cfg.Address,
 		Handler: r,
 	}
 

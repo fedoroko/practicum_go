@@ -47,8 +47,8 @@ func Test_stats_collect(t *testing.T) {
 			fields: fields{
 				metrics: []metric{},
 				cfg: &config{
-					pollInterval:     1,
-					shutdownInterval: 2,
+					PollInterval:     1,
+					ShutdownInterval: 2,
 				},
 			},
 		},
@@ -67,7 +67,7 @@ func Test_stats_collect(t *testing.T) {
 			}
 
 			go s.collect()
-			time.Sleep(s.cfg.shutdownInterval * time.Second)
+			time.Sleep(s.cfg.ShutdownInterval * time.Second)
 
 			assert.NotEqual(t, s.metrics, empty.metrics)
 		})

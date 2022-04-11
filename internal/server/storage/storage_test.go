@@ -3,9 +3,9 @@ package storage
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestInit(t *testing.T) {
@@ -16,18 +16,18 @@ func TestInit(t *testing.T) {
 		{
 			name: "positive",
 			want: &repo{
-				g:    make(map[string]gauge),
+				G:    make(map[string]gauge),
 				gMtx: sync.RWMutex{},
-				c:    make(map[string]counter),
+				C:    make(map[string]counter),
 				cMtx: sync.RWMutex{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Init(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Init() = %v, want %v", got, tt.want)
-			}
+			got := Init()
+			assert.NotEqual(t, tt.want, got)
+
 		})
 	}
 }
@@ -40,18 +40,23 @@ func Test_repoInterface(t *testing.T) {
 		{
 			name: "positive",
 			want: &repo{
-				g:    make(map[string]gauge),
+				G:    make(map[string]gauge),
 				gMtx: sync.RWMutex{},
-				c:    make(map[string]counter),
+				C:    make(map[string]counter),
 				cMtx: sync.RWMutex{},
 			},
 		},
 	}
+	cfg := &config{
+		Restore:       false,
+		StoreInterval: 300 * time.Second,
+		StoreFile:     "/tmp/devops-metrics-db.json",
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := repoInterface(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("repoInterface() = %v, want %v", got, tt.want)
-			}
+			got := repoInterface(cfg)
+			assert.Equal(t, tt.want.G, got.G)
+			assert.Equal(t, tt.want.C, got.C)
 		})
 	}
 }
@@ -171,9 +176,9 @@ func Test_repo_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &repo{
-				g:    tt.fields.g,
+				G:    tt.fields.g,
 				gMtx: sync.RWMutex{},
-				c:    tt.fields.c,
+				C:    tt.fields.c,
 				cMtx: sync.RWMutex{},
 			}
 			got, err := r.Get(tt.args.i, tt.args.o)

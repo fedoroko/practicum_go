@@ -41,8 +41,8 @@ func newStats(cfg *config) *stats {
 func (s *stats) collect() {
 	var currentStats runtime.MemStats
 
-	pollTicker := time.NewTicker(s.cfg.pollInterval * time.Second)
-	shutdownTimer := time.NewTimer(s.cfg.shutdownInterval * time.Second)
+	pollTicker := time.NewTicker(s.cfg.PollInterval)
+	shutdownTimer := time.NewTimer(s.cfg.ShutdownInterval)
 	defer pollTicker.Stop()
 	defer shutdownTimer.Stop()
 
@@ -218,7 +218,7 @@ func (s *stats) send() {
 		SetRetryWaitTime(20 * time.Second).
 		SetRetryMaxWaitTime(100 * time.Second)
 
-	sendTicker := time.NewTicker(s.cfg.reportInterval * time.Second)
+	sendTicker := time.NewTicker(s.cfg.ReportInterval)
 	defer sendTicker.Stop()
 	for {
 		select {
@@ -237,7 +237,7 @@ func (s *stats) send() {
 }
 
 func requestHandler(c *resty.Client, cfg *config, m metric) {
-	switch cfg.contentType {
+	switch cfg.ContentType {
 	case ContentTypeJSON:
 		jsonRequest(c, cfg, m)
 	default:
@@ -246,7 +246,7 @@ func requestHandler(c *resty.Client, cfg *config, m metric) {
 }
 
 func jsonRequest(c *resty.Client, cfg *config, m metric) {
-	url := cfg.endpoint + "/update"
+	url := "http://" + cfg.Address + "/update"
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Fatal(err)
@@ -267,7 +267,7 @@ func jsonRequest(c *resty.Client, cfg *config, m metric) {
 }
 
 func plainRequest(c *resty.Client, cfg *config, m metric) {
-	url := cfg.endpoint + "/update/" + m.MType + "/" + m.ID + "/"
+	url := "http://" + cfg.Address + "/update/" + m.MType + "/" + m.ID + "/"
 	switch m.MType {
 	case "counter":
 		url += fmt.Sprintf("%v", m.Delta)
