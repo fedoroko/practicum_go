@@ -33,6 +33,7 @@ type repo struct {
 	storeInterval time.Duration
 	storeFile     string
 	producer      *producer
+	consumer      *consumer
 }
 
 func repoInterface(cfg *config) *repo {
@@ -45,6 +46,11 @@ func repoInterface(cfg *config) *repo {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	c, err := newConsumer(cfg.StoreFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return &repo{
 		G:             make(map[string]gauge),
 		gMtx:          sync.RWMutex{},
@@ -53,6 +59,7 @@ func repoInterface(cfg *config) *repo {
 		storeInterval: cfg.StoreInterval,
 		storeFile:     cfg.StoreFile,
 		producer:      p,
+		consumer:      c,
 	}
 }
 
@@ -147,12 +154,8 @@ func (r *repo) restore() error {
 		return errors.New("empty file path")
 	}
 
-	c, err := newConsumer(r.storeFile)
-	if err != nil {
-		return err
-	}
-	defer c.close()
-	err = c.read(r)
+	defer r.consumer.close()
+	err := r.consumer.read(r)
 	if errors.Is(err, io.EOF) {
 		err = nil
 	}
@@ -167,7 +170,7 @@ func (r *repo) listenAndWrite() {
 	t := time.NewTicker(r.storeInterval)
 	defer t.Stop()
 	for range t.C {
-		log.Fatal(r.producer.write(r))
+		r.producer.write(r)
 	}
 }
 
