@@ -1,6 +1,7 @@
 package server
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"time"
@@ -14,10 +15,19 @@ import (
 )
 
 type config struct {
-	Address       string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
-	Restore       bool          `env:"RESTORE" envDefault:"true"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+	Address       string        `env:"ADDRESS"`
+	Restore       bool          `env:"RESTORE"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL"`
+	StoreFile     string        `env:"STORE_FILE"`
+}
+
+func parseFlags(cfg *config) {
+	flag.StringVar(&cfg.Address, "a", "127.0.0.1:8080", "Host address")
+	flag.BoolVar(&cfg.Restore, "r", true, "Restore previous db")
+	i := flag.Int("i", 300, "Store interval")
+	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "Store file path")
+	flag.Parse()
+	cfg.StoreInterval = time.Duration(*i) * time.Second
 }
 
 type option func(*config)
@@ -38,6 +48,9 @@ func Run(opts ...option) {
 		StoreInterval: 300 * time.Second,
 		StoreFile:     "/tmp/devops-metrics-db.json",
 	}
+
+	parseFlags(cfg)
+
 	for _, o := range opts {
 		o(cfg)
 	}

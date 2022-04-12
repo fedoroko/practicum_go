@@ -7,10 +7,10 @@ import (
 )
 
 type config struct {
-	PollInterval     time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
-	ReportInterval   time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
-	ShutdownInterval time.Duration `env:"SHUTDOWN_INTERVAL" envDefault:"500s"`
-	Address          string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	PollInterval     time.Duration `env:"POLL_INTERVAL"`
+	ReportInterval   time.Duration `env:"REPORT_INTERVAL"`
+	ShutdownInterval time.Duration `env:"SHUTDOWN_INTERVAL"`
+	Address          string        `env:"ADDRESS"`
 	ContentType      string
 }
 
@@ -61,6 +61,7 @@ func WithEnv() option {
 }
 
 func Run(opts ...option) {
+
 	cfg := &config{
 		PollInterval:     2 * time.Second,
 		ReportInterval:   10 * time.Second,
@@ -68,6 +69,8 @@ func Run(opts ...option) {
 		ContentType:      ContentTypePlain,
 		Address:          "127.0.0.1:8080",
 	}
+
+	parseFlags(cfg)
 
 	for _, o := range opts {
 		o(cfg)
