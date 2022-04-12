@@ -194,7 +194,7 @@ func Init(cfg *Config) Repository {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(cfg)
+
 	db := repoInterface(cfg)
 
 	if cfg.Restore {
