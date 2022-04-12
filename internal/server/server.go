@@ -72,7 +72,7 @@ func Run(opts ...option) {
 	}
 
 	go func() {
-		log.Fatal(server.ListenAndServe())
+		log.Fatal(server.ListenAndServe(), cfg)
 	}()
 
 	sig := make(chan os.Signal, 1)
