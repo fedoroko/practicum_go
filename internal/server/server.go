@@ -72,7 +72,6 @@ func Run(opts ...option) {
 	}
 
 	go func() {
-		defer db.Close()
 		log.Fatal(server.ListenAndServe())
 	}()
 
@@ -83,6 +82,7 @@ func Run(opts ...option) {
 		syscall.SIGQUIT,
 	)
 	<-sig
+	db.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	defer os.Exit(0)

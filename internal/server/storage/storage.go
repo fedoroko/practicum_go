@@ -179,7 +179,6 @@ func (r *repo) listenAndWrite() {
 func (r *repo) Close() {
 	r.producer.close()
 	r.consumer.close()
-	fmt.Println("closed db")
 }
 
 type Config struct {
@@ -189,15 +188,11 @@ type Config struct {
 }
 
 func Init(cfg *Config) Repository {
-	//cfg := &Config{
-	//	Restore:       true,
-	//	StoreInterval: 300 * time.Second,
-	//	StoreFile:     "/tmp/devops-metrics-db.json",
-	//}
 	err := env.Parse(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	db := repoInterface(cfg)
 
 	if cfg.Restore {
