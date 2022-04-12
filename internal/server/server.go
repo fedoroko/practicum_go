@@ -2,12 +2,13 @@ package server
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v6"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/caarlos0/env/v6"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/fedoroko/practicum_go/internal/server/handlers"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
