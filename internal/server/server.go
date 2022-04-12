@@ -1,16 +1,12 @@
 package server
 
 import (
-	"context"
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/fedoroko/practicum_go/internal/server/handlers"
@@ -71,23 +67,23 @@ func Run(opts ...option) {
 		Handler: r,
 	}
 
-	go func() {
-		log.Fatal(server.ListenAndServe(), cfg)
-	}()
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig,
-		syscall.SIGTERM,
-		syscall.SIGINT,
-		syscall.SIGQUIT,
-	)
-	<-sig
-	db.Close()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	defer os.Exit(0)
-
-	log.Fatal(server.Shutdown(ctx))
+	//go func() {
+	log.Fatal(server.ListenAndServe(), cfg)
+	//}()
+	//
+	//sig := make(chan os.Signal, 1)
+	//signal.Notify(sig,
+	//	syscall.SIGTERM,
+	//	syscall.SIGINT,
+	//	syscall.SIGQUIT,
+	//)
+	//<-sig
+	//db.Close()
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
+	//defer os.Exit(0)
+	//
+	//log.Fatal(server.Shutdown(ctx))
 }
 
 func router(db *storage.Repository) chi.Router {
