@@ -1,14 +1,9 @@
 package server
 
 import (
-	"context"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v6"
@@ -49,7 +44,7 @@ func WithEnv() option {
 	}
 }
 
-func Run(opts ...option) {
+func Run(opts ...option) error {
 	cfg := &config{
 		Address:       "127.0.0.1:8080",
 		Restore:       true,
@@ -70,21 +65,23 @@ func Run(opts ...option) {
 		Handler: r,
 	}
 
-	go func() {
-		log.Fatal(server.ListenAndServe())
-	}()
+	return server.ListenAndServe()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig,
-		syscall.SIGTERM,
-		syscall.SIGINT,
-		syscall.SIGQUIT,
-	)
-	<-sig
-	fmt.Println("signal!")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	log.Fatal(server.Shutdown(ctx))
+	//go func() {
+	//	log.Fatal(server.ListenAndServe())
+	//}()
+
+	//sig := make(chan os.Signal, 1)
+	//signal.Notify(sig,
+	//	syscall.SIGTERM,
+	//	syscall.SIGINT,
+	//	syscall.SIGQUIT,
+	//)
+	//<-sig
+	//fmt.Println("signal!")
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
+	//log.Fatal(server.Shutdown(ctx))
 }
 
 func router() chi.Router {
