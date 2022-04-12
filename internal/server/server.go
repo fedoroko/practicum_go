@@ -24,10 +24,13 @@ type config struct {
 func parseFlags(cfg *config) {
 	flag.StringVar(&cfg.Address, "a", "127.0.0.1:8080", "Host address")
 	flag.BoolVar(&cfg.Restore, "r", true, "Restore previous db")
-	i := flag.Int("i", 300, "Store interval")
+	i := flag.String("i", "300s", "Store interval")
 	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "Store file path")
 	flag.Parse()
-	cfg.StoreInterval = time.Duration(*i) * time.Second
+	d, err := time.ParseDuration(*i)
+	if err != nil {
+		cfg.StoreInterval = d
+	}
 }
 
 type option func(*config)
