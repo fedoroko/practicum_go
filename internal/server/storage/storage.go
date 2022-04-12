@@ -163,6 +163,7 @@ func (r *repo) restore() error {
 }
 
 func (r *repo) listenAndWrite() {
+	defer r.producer.close()
 	if r.storeInterval == 0 {
 		return
 	}

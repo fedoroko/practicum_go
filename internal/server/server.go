@@ -1,9 +1,14 @@
 package server
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v6"
@@ -65,8 +70,21 @@ func Run(opts ...option) {
 		Handler: r,
 	}
 
-	defer server.Close()
-	log.Fatal(server.ListenAndServe())
+	go func() {
+		log.Fatal(server.ListenAndServe())
+	}()
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig,
+		syscall.SIGTERM,
+		syscall.SIGINT,
+		syscall.SIGQUIT,
+	)
+	<-sig
+	fmt.Println("signal!")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	log.Fatal(server.Shutdown(ctx))
 }
 
 func router() chi.Router {
