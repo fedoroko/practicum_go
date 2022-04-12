@@ -36,7 +36,7 @@ type repo struct {
 	consumer      *consumer
 }
 
-func repoInterface(cfg *config) *repo {
+func repoInterface(cfg *Config) *repo {
 	flag := 0
 	if cfg.StoreInterval == 0 {
 		flag = os.O_SYNC
@@ -96,8 +96,10 @@ func (r *repo) Get(i input, o output) (string, error) {
 }
 
 func (r *repo) Set(i input) error {
+	fmt.Println(r.storeInterval)
 	if r.storeInterval == 0 {
 		defer r.producer.write(r)
+		fmt.Println("written")
 	}
 	m, err := i()
 	if err != nil {
@@ -164,6 +166,7 @@ func (r *repo) restore() error {
 
 func (r *repo) listenAndWrite() {
 	defer r.producer.close()
+	defer fmt.Println("closed")
 	if r.storeInterval == 0 {
 		return
 	}
@@ -175,22 +178,23 @@ func (r *repo) listenAndWrite() {
 	}
 }
 
-type config struct {
-	Restore       bool          `env:"RESTORE" envDefault:"true"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+type Config struct {
+	Restore       bool          `env:"RESTORE"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL"`
+	StoreFile     string        `env:"STORE_FILE"`
 }
 
-func Init() Repository {
-	cfg := &config{
-		Restore:       true,
-		StoreInterval: 300 * time.Second,
-		StoreFile:     "/tmp/devops-metrics-db.json",
-	}
+func Init(cfg *Config) Repository {
+	//cfg := &Config{
+	//	Restore:       true,
+	//	StoreInterval: 300 * time.Second,
+	//	StoreFile:     "/tmp/devops-metrics-db.json",
+	//}
 	err := env.Parse(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(cfg)
 	db := repoInterface(cfg)
 
 	if cfg.Restore {

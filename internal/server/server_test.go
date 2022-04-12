@@ -2,14 +2,14 @@ package server
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"time"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
@@ -28,7 +28,11 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	r := router()
+	r := router(&config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

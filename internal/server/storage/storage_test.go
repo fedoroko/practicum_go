@@ -25,7 +25,11 @@ func TestInit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Init()
+			got := Init(&Config{
+				Restore:       false,
+				StoreInterval: time.Duration(200) * time.Second,
+				StoreFile:     "/tmp/123.json",
+			})
 			assert.NotEqual(t, tt.want, got)
 
 		})
@@ -47,7 +51,7 @@ func Test_repoInterface(t *testing.T) {
 			},
 		},
 	}
-	cfg := &config{
+	cfg := &Config{
 		Restore:       false,
 		StoreInterval: 300 * time.Second,
 		StoreFile:     "/tmp/devops-metrics-db.json",
@@ -203,7 +207,11 @@ func Test_repo_List(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := Init()
+			r := Init(&Config{
+				Restore:       false,
+				StoreInterval: time.Duration(200) * time.Second,
+				StoreFile:     "/tmp/123.json",
+			})
 			got := r.List()
 			assert.NotEqual(t, "", got)
 		})
@@ -282,7 +290,11 @@ func Test_repo_Set(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	r := Init()
+	r := Init(&Config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := r.Set(tt.args.i)

@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func Test_repoHandler_GetFunc(t *testing.T) {
@@ -65,7 +66,11 @@ func Test_repoHandler_GetFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init()
+	db := storage.Init(&storage.Config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	_ = db.Set(
 		storage.RawWithValue("gauge", "Alloc", "1"),
 	)
@@ -145,7 +150,11 @@ func Test_repoHandler_GetJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init()
+	db := storage.Init(&storage.Config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	_ = db.Set(
 		storage.RawWithValue("gauge", "Alloc", "1"),
 	)
@@ -265,7 +274,11 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init()
+	db := storage.Init(&storage.Config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -351,7 +364,11 @@ func Test_repoHandler_UpdateJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init()
+	db := storage.Init(&storage.Config{
+		Restore:       false,
+		StoreInterval: time.Duration(200) * time.Second,
+		StoreFile:     "/tmp/123.json",
+	})
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
