@@ -2,7 +2,6 @@ package agent
 
 import (
 	"flag"
-	"fmt"
 	"time"
 )
 
@@ -13,5 +12,4 @@ func parseFlags(cfg *config) {
 	flag.Parse()
 	cfg.PollInterval = time.Duration(*p) * time.Second
 	cfg.ReportInterval = time.Duration(*r) * time.Second
-	fmt.Println(flag.Args())
 }
