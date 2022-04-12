@@ -179,6 +179,7 @@ func (r *repo) listenAndWrite() {
 func (r *repo) Close() {
 	r.producer.close()
 	r.consumer.close()
+	fmt.Println("closed db")
 }
 
 type Config struct {
@@ -197,7 +198,6 @@ func Init(cfg *Config) Repository {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	db := repoInterface(cfg)
 
 	if cfg.Restore {

@@ -55,7 +55,16 @@ func Run(opts ...option) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	r := router(cfg)
+
+	db := storage.Init(
+		&storage.Config{
+			Restore:       cfg.Restore,
+			StoreInterval: cfg.StoreInterval,
+			StoreFile:     cfg.StoreFile,
+		},
+	)
+
+	r := router(&db)
 
 	server := &http.Server{
 		Addr:    cfg.Address,
@@ -63,6 +72,7 @@ func Run(opts ...option) {
 	}
 
 	go func() {
+		defer db.Close()
 		log.Fatal(server.ListenAndServe())
 	}()
 
@@ -80,7 +90,7 @@ func Run(opts ...option) {
 	log.Fatal(server.Shutdown(ctx))
 }
 
-func router(cfg *config) chi.Router {
+func router(db *storage.Repository) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
@@ -88,15 +98,7 @@ func router(cfg *config) chi.Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 
-	db := storage.Init(
-		&storage.Config{
-			Restore:       cfg.Restore,
-			StoreInterval: cfg.StoreInterval,
-			StoreFile:     cfg.StoreFile,
-		},
-	)
-	defer db.Close()
-	h := handlers.NewRepoHandler(db)
+	h := handlers.NewRepoHandler(*db)
 
 	r.Get("/", h.IndexFunc)
 	r.Route("/value", func(r chi.Router) {
