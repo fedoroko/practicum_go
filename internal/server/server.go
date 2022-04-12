@@ -65,6 +65,7 @@ func Run(opts ...option) {
 		Handler: r,
 	}
 
+	defer server.Close()
 	log.Fatal(server.ListenAndServe())
 }
 
