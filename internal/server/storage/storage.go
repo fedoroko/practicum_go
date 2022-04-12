@@ -19,6 +19,7 @@ type Repository interface {
 	List() string
 	restore() error
 	listenAndWrite()
+	Close()
 }
 
 type gauge float64
@@ -96,10 +97,8 @@ func (r *repo) Get(i input, o output) (string, error) {
 }
 
 func (r *repo) Set(i input) error {
-	fmt.Println(r.storeInterval)
 	if r.storeInterval == 0 {
 		defer r.producer.write(r)
-		fmt.Println("written")
 	}
 	m, err := i()
 	if err != nil {
@@ -166,7 +165,6 @@ func (r *repo) restore() error {
 
 func (r *repo) listenAndWrite() {
 	defer r.producer.close()
-	defer fmt.Println("closed")
 	if r.storeInterval == 0 {
 		return
 	}
@@ -176,6 +174,11 @@ func (r *repo) listenAndWrite() {
 	for range t.C {
 		r.producer.write(r)
 	}
+}
+
+func (r *repo) Close() {
+	r.producer.close()
+	r.consumer.close()
 }
 
 type Config struct {

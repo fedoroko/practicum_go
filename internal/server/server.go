@@ -49,7 +49,7 @@ func WithEnv() option {
 
 func Run(opts ...option) {
 	cfg := &config{}
-	
+
 	parseFlags(cfg)
 
 	for _, o := range opts {
@@ -78,7 +78,6 @@ func Run(opts ...option) {
 	defer os.Exit(0)
 
 	log.Fatal(server.Shutdown(ctx))
-	return
 }
 
 func router(cfg *config) chi.Router {
@@ -96,6 +95,7 @@ func router(cfg *config) chi.Router {
 			StoreFile:     cfg.StoreFile,
 		},
 	)
+	defer db.Close()
 	h := handlers.NewRepoHandler(db)
 
 	r.Get("/", h.IndexFunc)
