@@ -40,7 +40,7 @@ func WithEnv() option {
 	return func(cfg *config) {
 		err := env.Parse(cfg)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 }
@@ -74,7 +74,7 @@ func Run(opts ...option) {
 	defer log.Println("run : starting ended")
 	defer server.Shutdown(context.Background())
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 }

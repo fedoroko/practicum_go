@@ -45,12 +45,12 @@ func repoInterface(cfg *Config) *repo {
 
 	p, err := newProducer(cfg.StoreFile, flag)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	c, err := newConsumer(cfg.StoreFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	return &repo{
 		G:             make(map[string]gauge),
@@ -196,7 +196,7 @@ type Config struct {
 func Init(cfg *Config) Repository {
 	err := env.Parse(cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	db := repoInterface(cfg)
@@ -204,7 +204,7 @@ func Init(cfg *Config) Repository {
 	if cfg.Restore {
 		err = db.restore()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
