@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"log"
 	"math/rand"
 	"net/http"
@@ -25,10 +26,10 @@ type stats struct {
 	count   int64
 	mtx     sync.RWMutex
 	done    chan struct{}
-	cfg     *config
+	cfg     *config.AgentConfig
 }
 
-func newStats(cfg *config) *stats {
+func newStats(cfg *config.AgentConfig) *stats {
 	return &stats{
 		metrics: []metric{},
 		count:   0,
@@ -236,7 +237,7 @@ func (s *stats) send() {
 	}
 }
 
-func requestHandler(c *resty.Client, cfg *config, m metric) {
+func requestHandler(c *resty.Client, cfg *config.AgentConfig, m metric) {
 	switch cfg.ContentType {
 	case ContentTypeJSON:
 		jsonRequest(c, cfg, m)
@@ -245,7 +246,7 @@ func requestHandler(c *resty.Client, cfg *config, m metric) {
 	}
 }
 
-func jsonRequest(c *resty.Client, cfg *config, m metric) {
+func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metric) {
 	url := "http://" + cfg.Address + "/update"
 	data, err := json.Marshal(m)
 	if err != nil {
@@ -266,7 +267,7 @@ func jsonRequest(c *resty.Client, cfg *config, m metric) {
 	}
 }
 
-func plainRequest(c *resty.Client, cfg *config, m metric) {
+func plainRequest(c *resty.Client, cfg *config.AgentConfig, m metric) {
 	url := "http://" + cfg.Address + "/update/" + m.MType + "/" + m.ID + "/"
 	switch m.MType {
 	case "counter":

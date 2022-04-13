@@ -1,41 +1,32 @@
 package agent
 
 import (
-	"github.com/caarlos0/env/v6"
-	"log"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"time"
 )
 
-type config struct {
-	PollInterval     time.Duration `env:"POLL_INTERVAL"`
-	ReportInterval   time.Duration `env:"REPORT_INTERVAL"`
-	ShutdownInterval time.Duration `env:"SHUTDOWN_INTERVAL"`
-	Address          string        `env:"ADDRESS"`
-	ContentType      string
-}
-
-type option func(*config)
+type option func(cfg *config.AgentConfig)
 
 func WithPollInterval(i time.Duration) option {
-	return func(cfg *config) {
+	return func(cfg *config.AgentConfig) {
 		cfg.PollInterval = i * time.Second
 	}
 }
 
 func WithReportInterval(i time.Duration) option {
-	return func(cfg *config) {
+	return func(cfg *config.AgentConfig) {
 		cfg.ReportInterval = i * time.Second
 	}
 }
 
 func WithShutdownInterval(i time.Duration) option {
-	return func(cfg *config) {
+	return func(cfg *config.AgentConfig) {
 		cfg.ShutdownInterval = i * time.Second
 	}
 }
 
 func WithEndpoint(addr string) option {
-	return func(cfg *config) {
+	return func(cfg *config.AgentConfig) {
 		cfg.Address = addr
 	}
 }
@@ -46,36 +37,15 @@ const (
 )
 
 func WithContentType(contentType string) option {
-	return func(cfg *config) {
+	return func(cfg *config.AgentConfig) {
 		cfg.ContentType = contentType
 	}
 }
 
-func WithEnv() option {
-	return func(cfg *config) {
-		err := env.Parse(cfg)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func Run(opts ...option) {
-
-	cfg := &config{
-		PollInterval:     2 * time.Second,
-		ReportInterval:   10 * time.Second,
-		ShutdownInterval: 200 * time.Second,
-		ContentType:      ContentTypePlain,
-		Address:          "127.0.0.1:8080",
-	}
-
-	parseFlags(cfg)
-
+func Run(cfg *config.AgentConfig, opts ...option) {
 	for _, o := range opts {
 		o(cfg)
 	}
-
 	s := newStats(cfg)
 
 	go s.collect()

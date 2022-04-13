@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -10,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
@@ -29,11 +29,8 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter(t *testing.T) {
-	db := storage.Init(&storage.Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	db := storage.New(config.NewServerConfig().Default())
+	defer db.Close()
 	r := router(&db)
 	ts := httptest.NewServer(r)
 	defer ts.Close()

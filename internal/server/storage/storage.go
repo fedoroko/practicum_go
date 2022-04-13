@@ -3,7 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"github.com/caarlos0/env/v6"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"io"
 	"log"
 	"os"
@@ -37,7 +37,7 @@ type repo struct {
 	consumer      *consumer
 }
 
-func repoInterface(cfg *Config) *repo {
+func repoInterface(cfg *config.ServerConfig) *repo {
 	flag := 0
 	if cfg.StoreInterval == 0 {
 		flag = os.O_SYNC
@@ -164,7 +164,6 @@ func (r *repo) restore() error {
 }
 
 func (r *repo) listenAndWrite() {
-	defer r.producer.close()
 	if r.storeInterval == 0 {
 		return
 	}
@@ -177,32 +176,21 @@ func (r *repo) listenAndWrite() {
 }
 
 func (r *repo) Close() error {
+	log.Println("trying to close db")
 	if err := r.producer.close(); err != nil {
-		return err
-	}
-	if err := r.consumer.close(); err != nil {
+		log.Println(err, "producer")
 		return err
 	}
 
+	log.Println("db closed")
 	return nil
 }
 
-type Config struct {
-	Restore       bool          `env:"RESTORE"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL"`
-	StoreFile     string        `env:"STORE_FILE"`
-}
-
-func Init(cfg *Config) Repository {
-	err := env.Parse(cfg)
-	if err != nil {
-		log.Println(err)
-	}
-
+func New(cfg *config.ServerConfig) Repository {
 	db := repoInterface(cfg)
 
 	if cfg.Restore {
-		err = db.restore()
+		err := db.restore()
 		if err != nil {
 			log.Println(err)
 		}

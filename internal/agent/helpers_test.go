@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
@@ -8,8 +9,10 @@ import (
 )
 
 func Test_newStats(t *testing.T) {
+	cfg := config.NewAgentConfig().Default()
+	cfg.PollInterval = time.Second * 1
 	type args struct {
-		cfg *config
+		cfg *config.AgentConfig
 	}
 	tests := []struct {
 		name string
@@ -18,7 +21,7 @@ func Test_newStats(t *testing.T) {
 		{
 			name: "positive",
 			args: args{
-				cfg: &config{},
+				cfg: cfg,
 			},
 		},
 	}
@@ -31,12 +34,14 @@ func Test_newStats(t *testing.T) {
 }
 
 func Test_stats_collect(t *testing.T) {
+	cfg := config.NewAgentConfig().Default()
+	cfg.PollInterval = time.Second * 1
 	type fields struct {
 		metrics []metric
 		count   int64
 		mtx     *sync.RWMutex
 		done    chan struct{}
-		cfg     *config
+		cfg     *config.AgentConfig
 	}
 	tests := []struct {
 		name   string
@@ -46,10 +51,7 @@ func Test_stats_collect(t *testing.T) {
 			name: "positive",
 			fields: fields{
 				metrics: []metric{},
-				cfg: &config{
-					PollInterval:     1,
-					ShutdownInterval: 2,
-				},
+				cfg:     cfg,
 			},
 		},
 	}
@@ -67,8 +69,7 @@ func Test_stats_collect(t *testing.T) {
 			}
 
 			go s.collect()
-			time.Sleep(s.cfg.ShutdownInterval * time.Second)
-
+			time.Sleep(s.cfg.PollInterval + time.Second*1)
 			assert.NotEqual(t, s.metrics, empty.metrics)
 		})
 	}

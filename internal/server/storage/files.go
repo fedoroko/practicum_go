@@ -14,11 +14,11 @@ type producer struct {
 
 func newProducer(fileName string, flag int) (*producer, error) {
 	flags := os.O_WRONLY | os.O_CREATE
-	//fmt.Println(flags)
+	//fmt.Println(config)
 	if flag != 0 {
 		flags |= flag
 	}
-	//fmt.Println(flags)
+	//fmt.Println(config)
 	file, err := os.OpenFile(fileName, flags, 0777)
 	if err != nil {
 		return nil, err

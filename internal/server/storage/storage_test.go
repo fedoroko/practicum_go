@@ -1,14 +1,14 @@
 package storage
 
 import (
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sync"
 	"testing"
-	"time"
 )
 
-func TestInit(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
 		name string
 		want Repository
@@ -25,13 +25,8 @@ func TestInit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Init(&Config{
-				Restore:       false,
-				StoreInterval: time.Duration(200) * time.Second,
-				StoreFile:     "/tmp/123.json",
-			})
+			got := New(config.NewServerConfig().Default())
 			assert.NotEqual(t, tt.want, got)
-
 		})
 	}
 }
@@ -51,14 +46,9 @@ func Test_repoInterface(t *testing.T) {
 			},
 		},
 	}
-	cfg := &Config{
-		Restore:       false,
-		StoreInterval: 300 * time.Second,
-		StoreFile:     "/tmp/devops-metrics-db.json",
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := repoInterface(cfg)
+			got := repoInterface(config.NewServerConfig().Default())
 			assert.Equal(t, tt.want.G, got.G)
 			assert.Equal(t, tt.want.C, got.C)
 		})
@@ -207,11 +197,7 @@ func Test_repo_List(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := Init(&Config{
-				Restore:       false,
-				StoreInterval: time.Duration(200) * time.Second,
-				StoreFile:     "/tmp/123.json",
-			})
+			r := New(config.NewServerConfig().Default())
 			got := r.List()
 			assert.NotEqual(t, "", got)
 		})
@@ -290,11 +276,8 @@ func Test_repo_Set(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	r := Init(&Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	r := New(config.NewServerConfig().Default())
+	defer r.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := r.Set(tt.args.i)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 func Test_repoHandler_GetFunc(t *testing.T) {
@@ -66,14 +66,11 @@ func Test_repoHandler_GetFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init(&storage.Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	db := storage.New(config.NewServerConfig().Default())
 	_ = db.Set(
 		storage.RawWithValue("gauge", "Alloc", "1"),
 	)
+	defer db.Close()
 	h := NewRepoHandler(db)
 
 	for _, tt := range tests {
@@ -150,14 +147,11 @@ func Test_repoHandler_GetJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init(&storage.Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	db := storage.New(config.NewServerConfig().Default())
 	_ = db.Set(
 		storage.RawWithValue("gauge", "Alloc", "1"),
 	)
+	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -274,11 +268,8 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init(&storage.Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	db := storage.New(config.NewServerConfig().Default())
+	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -364,11 +355,8 @@ func Test_repoHandler_UpdateJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.Init(&storage.Config{
-		Restore:       false,
-		StoreInterval: time.Duration(200) * time.Second,
-		StoreFile:     "/tmp/123.json",
-	})
+	db := storage.New(config.NewServerConfig().Default())
+	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
