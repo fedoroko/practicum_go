@@ -53,7 +53,7 @@ func Run(opts ...option) {
 	for _, o := range opts {
 		o(cfg)
 	}
-
+	log.Println("cfg:", cfg)
 	db := storage.Init(
 		&storage.Config{
 			Restore:       cfg.Restore,
@@ -61,14 +61,17 @@ func Run(opts ...option) {
 			StoreFile:     cfg.StoreFile,
 		},
 	)
+
 	defer db.Close()
 	r := router(&db)
-
+	log.Println("db created")
 	server := &http.Server{
 		Addr:    cfg.Address,
 		Handler: r,
 	}
 
+	log.Println("run : starting server")
+	defer log.Println("run : starting ended")
 	defer server.Shutdown(context.Background())
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
