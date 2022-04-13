@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	log.Println("Mainfunc")
 	log.Println("server started")
 	defer log.Println("server ended")
 	server.Run(

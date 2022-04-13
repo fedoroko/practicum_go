@@ -46,6 +46,7 @@ func WithEnv() option {
 }
 
 func Run(opts ...option) {
+	log.Println("Run func")
 	cfg := &config{}
 
 	parseFlags(cfg)
@@ -80,6 +81,7 @@ func Run(opts ...option) {
 }
 
 func router(db *storage.Repository) chi.Router {
+	log.Println("Router func")
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)

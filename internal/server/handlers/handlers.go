@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/fedoroko/practicum_go/internal/server/storage"
 	"github.com/go-chi/chi/v5"
+	"log"
 	"net/http"
 )
 
@@ -13,12 +14,14 @@ type repoHandler struct {
 }
 
 func NewRepoHandler(r storage.Repository) *repoHandler {
+	log.Println("NewRepoHandler")
 	return &repoHandler{
 		r: r,
 	}
 }
 
 func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("IndexFunc")
 	w.Header().Set("Content-Type", "text/plain")
 
 	data := h.r.List()
@@ -28,6 +31,7 @@ func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("UpdateFunc")
 	w.Header().Set("Content-Type", "text/plain")
 
 	t := chi.URLParam(r, "type")
@@ -53,6 +57,7 @@ func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("UpdateJSONFunc")
 	decoder := json.NewDecoder(r.Body)
 	m := storage.Metrics{}
 
@@ -82,6 +87,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("GetFunc")
 	w.Header().Set("Content-Type", "text/plain")
 
 	t := chi.URLParam(r, "type")
@@ -107,6 +113,7 @@ func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("GetJSONFunc")
 	decoder := json.NewDecoder(r.Body)
 	m := storage.Metrics{}
 
