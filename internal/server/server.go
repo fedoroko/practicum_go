@@ -70,7 +70,9 @@ func Run(opts ...option) {
 	}
 
 	defer server.Shutdown(context.Background())
-	log.Fatal(server.ListenAndServe(), cfg)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
 
 }
 
