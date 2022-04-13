@@ -1,10 +1,12 @@
 package server
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/caarlos0/env/v6"
@@ -73,11 +75,20 @@ func Run(opts ...option) {
 
 	log.Println("run : starting server")
 	defer log.Println("run : starting ended")
-	defer server.Shutdown(context.Background())
-	if err := server.ListenAndServe(); err != nil {
-		log.Println(err)
-	}
+	defer server.Close()
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Println(err)
+		}
+	}()
 
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig,
+		syscall.SIGTERM,
+		syscall.SIGINT,
+		syscall.SIGQUIT,
+	)
+	<-sig
 }
 
 func router(db *storage.Repository) chi.Router {
