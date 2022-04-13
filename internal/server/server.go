@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -60,7 +61,7 @@ func Run(opts ...option) {
 			StoreFile:     cfg.StoreFile,
 		},
 	)
-
+	defer db.Close()
 	r := router(&db)
 
 	server := &http.Server{
@@ -68,23 +69,9 @@ func Run(opts ...option) {
 		Handler: r,
 	}
 
-	//go func() {
+	defer server.Shutdown(context.Background())
 	log.Fatal(server.ListenAndServe(), cfg)
-	//}()
-	//
-	//sig := make(chan os.Signal, 1)
-	//signal.Notify(sig,
-	//	syscall.SIGTERM,
-	//	syscall.SIGINT,
-	//	syscall.SIGQUIT,
-	//)
-	//<-sig
-	//db.Close()
-	//ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-	//defer os.Exit(0)
-	//
-	//log.Fatal(server.Shutdown(ctx))
+
 }
 
 func router(db *storage.Repository) chi.Router {

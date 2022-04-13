@@ -19,7 +19,7 @@ type Repository interface {
 	List() string
 	restore() error
 	listenAndWrite()
-	Close()
+	Close() error
 }
 
 type gauge float64
@@ -176,9 +176,15 @@ func (r *repo) listenAndWrite() {
 	}
 }
 
-func (r *repo) Close() {
-	r.producer.close()
-	r.consumer.close()
+func (r *repo) Close() error {
+	if err := r.producer.close(); err != nil {
+		return err
+	}
+	if err := r.consumer.close(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Config struct {
