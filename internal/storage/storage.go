@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -17,7 +16,7 @@ import (
 type Repository interface {
 	Get(m metrics.Metric) (metrics.Metric, error)
 	Set(m metrics.Metric) error
-	List() string
+	List() []metrics.Metric
 
 	restore() error
 	listenAndWrite()
@@ -103,18 +102,30 @@ func (r *repo) Set(m metrics.Metric) error {
 	return errrs.ThrowInvalidTypeError(m.Type())
 }
 
-func (r *repo) List() string {
-	ret := "Known values:\n"
+func (r *repo) List() []metrics.Metric {
+	var ret []metrics.Metric
+
 	r.gMtx.Lock()
 	defer r.gMtx.Unlock()
 	for n, v := range r.G {
-		ret += fmt.Sprintf("%s - %v\n", n, v)
+		ret = append(ret, metrics.New(
+			n,
+			metrics.GaugeType,
+			float64(v),
+			0),
+		)
+
 	}
 
 	r.cMtx.Lock()
 	defer r.cMtx.Unlock()
 	for n, v := range r.C {
-		ret += fmt.Sprintf("%s - %v\n", n, v)
+		ret = append(ret, metrics.New(
+			n,
+			metrics.CounterType,
+			0,
+			int64(v)),
+		)
 	}
 
 	return ret
