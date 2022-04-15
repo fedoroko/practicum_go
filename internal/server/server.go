@@ -49,7 +49,7 @@ func router(db *storage.Repository) chi.Router {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
-	r.Use(handlers.GzipMiddleware)
+	r.Use(middleware.Compress(5))
 
 	h := handlers.NewRepoHandler(*db)
 
