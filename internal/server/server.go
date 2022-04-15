@@ -18,7 +18,7 @@ import (
 func Run(cfg *config.ServerConfig) {
 	db := storage.New(cfg)
 	defer db.Close()
-	log.Println("db init")
+
 	r := router(&db)
 
 	server := &http.Server{
@@ -27,8 +27,6 @@ func Run(cfg *config.ServerConfig) {
 	}
 
 	defer server.Close()
-	defer log.Println("server ended")
-	log.Println("starting server")
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			log.Println(err)
@@ -51,7 +49,7 @@ func router(db *storage.Repository) chi.Router {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
-	//r.Use(handlers.GzipMiddleware)
+	r.Use(handlers.GzipMiddleware)
 
 	h := handlers.NewRepoHandler(*db)
 

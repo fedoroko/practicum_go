@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -49,24 +47,6 @@ func (w *gzipWriter) Write(b []byte) (int, error) {
 
 func GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Content-Encoding") == "gzip" {
-			re, err := gzip.NewReader(r.Body)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-			}
-			defer re.Close()
-			var decomp bytes.Buffer
-
-			_, err = decomp.ReadFrom(re)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-			}
-			if decomp.Len() == 0 {
-				http.Error(w, "can't decompress", http.StatusBadRequest)
-			}
-
-			r.Body = ioutil.NopCloser(&decomp)
-		}
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			next.ServeHTTP(w, r)
 			return
