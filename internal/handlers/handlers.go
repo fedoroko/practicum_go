@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -22,6 +23,7 @@ func NewRepoHandler(r storage.Repository) *repoHandler {
 }
 
 func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
+	log.Println("indexFunc")
 	w.Header().Set("Content-Type", "text/plain")
 
 	data := h.r.List()

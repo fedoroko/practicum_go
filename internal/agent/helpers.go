@@ -305,7 +305,7 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	if err != nil {
 		log.Println(err)
 	}
-
+	log.Println(string(data))
 	resp, err := c.R().
 		SetHeader("Content-Type", ContentTypeJSON).
 		SetBody(data).
