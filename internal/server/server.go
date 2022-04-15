@@ -11,21 +11,12 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/fedoroko/practicum_go/internal/config"
-	"github.com/fedoroko/practicum_go/internal/server/handlers"
-	"github.com/fedoroko/practicum_go/internal/server/storage"
+	"github.com/fedoroko/practicum_go/internal/handlers"
+	"github.com/fedoroko/practicum_go/internal/storage"
 )
 
-type option func(serverConfig *config.ServerConfig)
-
-func Run(cfg *config.ServerConfig, opts ...option) {
-	log.Println("Run func")
-
-	for _, o := range opts {
-		o(cfg)
-	}
-	log.Println("cfg:", cfg)
+func Run(cfg *config.ServerConfig) {
 	db := storage.New(cfg)
-	log.Println("db created")
 	defer db.Close()
 
 	r := router(&db)
@@ -35,8 +26,6 @@ func Run(cfg *config.ServerConfig, opts ...option) {
 		Handler: r,
 	}
 
-	log.Println("run : starting server")
-	defer log.Println("run : starting ended")
 	defer server.Close()
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -54,13 +43,13 @@ func Run(cfg *config.ServerConfig, opts ...option) {
 }
 
 func router(db *storage.Repository) chi.Router {
-	log.Println("Router func")
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+	r.Use(handlers.GzipMiddleware)
 
 	h := handlers.NewRepoHandler(*db)
 

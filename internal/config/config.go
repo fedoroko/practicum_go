@@ -9,9 +9,8 @@ import (
 )
 
 type Config interface {
-	Default()
-	Flags()
-	Env()
+	Flags() *Config
+	Env() *Config
 }
 
 type ServerConfig struct {
@@ -19,15 +18,6 @@ type ServerConfig struct {
 	Restore       bool          `env:"RESTORE"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
 	StoreFile     string        `env:"STORE_FILE"`
-}
-
-func (s *ServerConfig) Default() *ServerConfig {
-	s.Address = "127.0.0.1:8080"
-	s.Restore = false
-	s.StoreInterval = time.Second * 300
-	s.StoreFile = "/tmp/devops-metrics-db.json"
-
-	return s
 }
 
 func (s *ServerConfig) Flags() *ServerConfig {
@@ -50,7 +40,12 @@ func (s *ServerConfig) Env() *ServerConfig {
 }
 
 func NewServerConfig() *ServerConfig {
-	return &ServerConfig{}
+	return &ServerConfig{
+		Address:       "127.0.0.1:8080",
+		Restore:       false,
+		StoreInterval: time.Second * 300,
+		StoreFile:     "/tmp/devops-metrics-db.json",
+	}
 }
 
 type AgentConfig struct {
@@ -59,16 +54,6 @@ type AgentConfig struct {
 	ReportInterval   time.Duration `env:"REPORT_INTERVAL"`
 	ShutdownInterval time.Duration
 	ContentType      string
-}
-
-func (a *AgentConfig) Default() *AgentConfig {
-	a.Address = "127.0.0.1:8080"
-	a.PollInterval = time.Second * 2
-	a.ReportInterval = time.Second * 10
-	a.ShutdownInterval = time.Minute * 10
-	a.ContentType = "text/plain"
-
-	return a
 }
 
 func (a *AgentConfig) Flags() *AgentConfig {
@@ -91,6 +76,9 @@ func (a *AgentConfig) Env() *AgentConfig {
 
 func NewAgentConfig() *AgentConfig {
 	return &AgentConfig{
+		Address:          "127.0.0.1:8080",
+		PollInterval:     time.Second * 2,
+		ReportInterval:   time.Second * 10,
 		ShutdownInterval: time.Second * 500,
 		ContentType:      "text/plain",
 	}

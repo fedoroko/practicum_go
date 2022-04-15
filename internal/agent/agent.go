@@ -1,27 +1,28 @@
 package agent
 
 import (
-	"github.com/fedoroko/practicum_go/internal/config"
 	"time"
+
+	"github.com/fedoroko/practicum_go/internal/config"
 )
 
 type option func(cfg *config.AgentConfig)
 
 func WithPollInterval(i time.Duration) option {
 	return func(cfg *config.AgentConfig) {
-		cfg.PollInterval = i * time.Second
+		cfg.PollInterval = i
 	}
 }
 
 func WithReportInterval(i time.Duration) option {
 	return func(cfg *config.AgentConfig) {
-		cfg.ReportInterval = i * time.Second
+		cfg.ReportInterval = i
 	}
 }
 
 func WithShutdownInterval(i time.Duration) option {
 	return func(cfg *config.AgentConfig) {
-		cfg.ShutdownInterval = i * time.Second
+		cfg.ShutdownInterval = i
 	}
 }
 

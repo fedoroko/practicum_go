@@ -3,14 +3,17 @@ package handlers
 import (
 	"bytes"
 	"context"
-	"github.com/fedoroko/practicum_go/internal/config"
-	"github.com/fedoroko/practicum_go/internal/server/storage"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/fedoroko/practicum_go/internal/config"
+	"github.com/fedoroko/practicum_go/internal/metrics"
+	"github.com/fedoroko/practicum_go/internal/storage"
 )
 
 func Test_repoHandler_GetFunc(t *testing.T) {
@@ -49,7 +52,7 @@ func Test_repoHandler_GetFunc(t *testing.T) {
 			},
 			want: want{
 				code:        501,
-				body:        "Invalid type: int",
+				body:        "",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -61,16 +64,17 @@ func Test_repoHandler_GetFunc(t *testing.T) {
 			},
 			want: want{
 				code:        404,
-				body:        "not found",
+				body:        "",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
 	}
-	db := storage.New(config.NewServerConfig().Default())
-	_ = db.Set(
-		storage.RawWithValue("gauge", "Alloc", "1"),
-	)
+	db := storage.New(config.NewServerConfig())
 	defer db.Close()
+
+	m, _ := metrics.RawWithValue("gauge", "Alloc", "1")
+	_ = db.Set(m)
+
 	h := NewRepoHandler(db)
 
 	for _, tt := range tests {
@@ -86,23 +90,17 @@ func Test_repoHandler_GetFunc(t *testing.T) {
 
 			hl.ServeHTTP(w, request)
 			res := w.Result()
-
-			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
-			}
-
 			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
 
-			if strings.TrimSpace(string(resBody)) != tt.want.body {
-				t.Errorf("Expected body \"%s\", got \"%s\"", tt.want.body, w.Body.String())
-			}
+			assert.Equal(t, tt.want.code, res.StatusCode)
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-type"))
 
-			if res.Header.Get("Content-Type") != tt.want.contentType {
-				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, res.Header.Get("Content-Type"))
+			if tt.want.code == 200 {
+				resBody, err := io.ReadAll(res.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+				assert.Equal(t, tt.want.body, string(resBody))
 			}
 		})
 	}
@@ -147,10 +145,9 @@ func Test_repoHandler_GetJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.New(config.NewServerConfig().Default())
-	_ = db.Set(
-		storage.RawWithValue("gauge", "Alloc", "1"),
-	)
+	db := storage.New(config.NewServerConfig())
+	m, _ := metrics.RawWithValue("gauge", "Alloc", "1")
+	_ = db.Set(m)
 	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
@@ -165,22 +162,17 @@ func Test_repoHandler_GetJSONFunc(t *testing.T) {
 			hl.ServeHTTP(w, request)
 			res := w.Result()
 
-			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
-			}
+			assert.Equal(t, tt.want.code, res.StatusCode)
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 
-			defer res.Body.Close()
-			resBody, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatal(err)
-			}
+			if tt.want.code == 200 {
+				defer res.Body.Close()
+				resBody, err := io.ReadAll(res.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
 
-			if strings.TrimSpace(string(resBody)) != tt.want.body {
-				t.Errorf("Expected body \"%s\", got \"%s\"", tt.want.body, w.Body.String())
-			}
-
-			if res.Header.Get("Content-Type") != tt.want.contentType {
-				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, res.Header.Get("Content-Type"))
+				assert.Equal(t, tt.want.body, string(resBody))
 			}
 		})
 	}
@@ -242,19 +234,6 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 			},
 		},
 		{
-			name: "empty value",
-			urlParams: params{
-				Type:  "gauge",
-				Name:  "Alloc",
-				Value: "",
-			},
-			want: want{
-				code:        400,
-				emptyBody:   false,
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
 			name: "non numeric value",
 			urlParams: params{
 				Type:  "gauge",
@@ -268,7 +247,7 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.New(config.NewServerConfig().Default())
+	db := storage.New(config.NewServerConfig())
 	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
@@ -286,9 +265,7 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 			hl.ServeHTTP(w, request)
 			res := w.Result()
 
-			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
-			}
+			assert.Equal(t, tt.want.code, res.StatusCode)
 
 			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
@@ -305,9 +282,7 @@ func Test_repoHandler_UpdateFunc(t *testing.T) {
 				}
 			}
 
-			if res.Header.Get("Content-Type") != tt.want.contentType {
-				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, res.Header.Get("Content-Type"))
-			}
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 		})
 	}
 }
@@ -355,7 +330,7 @@ func Test_repoHandler_UpdateJSONFunc(t *testing.T) {
 			},
 		},
 	}
-	db := storage.New(config.NewServerConfig().Default())
+	db := storage.New(config.NewServerConfig())
 	defer db.Close()
 	h := NewRepoHandler(db)
 	for _, tt := range tests {
@@ -370,15 +345,11 @@ func Test_repoHandler_UpdateJSONFunc(t *testing.T) {
 			hl.ServeHTTP(w, request)
 			res := w.Result()
 
-			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
-			}
+			assert.Equal(t, tt.want.code, res.StatusCode)
 
 			defer res.Body.Close()
 
-			if res.Header.Get("Content-Type") != tt.want.contentType {
-				t.Errorf("Expected Content-Type %s, got %s", tt.want.contentType, res.Header.Get("Content-Type"))
-			}
+			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
 		})
 	}
 }

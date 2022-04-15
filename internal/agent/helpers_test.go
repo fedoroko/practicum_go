@@ -1,15 +1,18 @@
 package agent
 
 import (
-	"github.com/fedoroko/practicum_go/internal/config"
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/fedoroko/practicum_go/internal/config"
+	"github.com/fedoroko/practicum_go/internal/metrics"
 )
 
 func Test_newStats(t *testing.T) {
-	cfg := config.NewAgentConfig().Default()
+	cfg := config.NewAgentConfig()
 	cfg.PollInterval = time.Second * 1
 	type args struct {
 		cfg *config.AgentConfig
@@ -34,10 +37,10 @@ func Test_newStats(t *testing.T) {
 }
 
 func Test_stats_collect(t *testing.T) {
-	cfg := config.NewAgentConfig().Default()
+	cfg := config.NewAgentConfig()
 	cfg.PollInterval = time.Second * 1
 	type fields struct {
-		metrics []metric
+		metrics []metrics.Metric
 		count   int64
 		mtx     *sync.RWMutex
 		done    chan struct{}
@@ -50,7 +53,7 @@ func Test_stats_collect(t *testing.T) {
 		{
 			name: "positive",
 			fields: fields{
-				metrics: []metric{},
+				metrics: []metrics.Metric{},
 				cfg:     cfg,
 			},
 		},
@@ -65,7 +68,7 @@ func Test_stats_collect(t *testing.T) {
 				cfg:     tt.fields.cfg,
 			}
 			empty := &stats{
-				metrics: []metric{},
+				metrics: []metrics.Metric{},
 			}
 
 			go s.collect()
