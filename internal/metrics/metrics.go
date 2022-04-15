@@ -26,7 +26,7 @@ type Metric interface {
 	SetInt64(int64)
 
 	ToString() string
-	ToJSON() ([]byte, error)
+	ToJSON() []byte
 }
 
 type metric struct {
@@ -69,26 +69,26 @@ func (m *metric) SetInt64(i int64) {
 func (m *metric) ToString() string {
 	switch m.Type() {
 	case GaugeType:
-		if m.Value == nil {
-			return ""
+		if m.Value != nil {
+			return fmt.Sprintf("%v", *m.Value)
 		}
-		return fmt.Sprintf("%v", *m.Value)
 	case CounterType:
-		if m.Delta == nil {
-			return ""
+		if m.Delta != nil {
+			return fmt.Sprintf("%v", *m.Delta)
 		}
-		return fmt.Sprintf("%v", *m.Delta)
 	}
 	return ""
 }
 
-func (m *metric) ToJSON() ([]byte, error) {
+// ToJSON ожидаю, что сериализации метрики будет пердсказуемой,
+// поэтому не возвращаю ошибку
+func (m *metric) ToJSON() []byte {
 	b, err := json.Marshal(m)
 	if err != nil {
-		return []byte(""), err
+		panic(err)
 	}
 
-	return b, nil
+	return b
 }
 
 func RawWithValue(t string, n string, v string) (Metric, error) {
@@ -96,10 +96,6 @@ func RawWithValue(t string, n string, v string) (Metric, error) {
 		ID:    n,
 		MType: t,
 	}
-
-	//if v == "" {
-	//	return m, errors.New("empty value")
-	//}
 
 	switch t {
 	case GaugeType:

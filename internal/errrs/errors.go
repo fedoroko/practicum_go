@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+// InvalidType Стоит ли выносить ошибки в отдельный пакет?
+// Тут очевидная проблема с неймингом пакета.
 var InvalidType *invalidTypeError
 
 type invalidTypeError struct {

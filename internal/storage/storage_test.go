@@ -126,8 +126,7 @@ func Test_repo_Get(t *testing.T) {
 			}
 			assert.Equal(t, tt.wantS, got.ToString())
 
-			b, _ := got.ToJSON()
-			assert.Equal(t, tt.wantJSON, b)
+			assert.Equal(t, tt.wantJSON, got.ToJSON())
 		})
 	}
 }

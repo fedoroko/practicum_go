@@ -117,11 +117,6 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 
-	b, err := ret.ToJSON()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(b)
+	w.Write(ret.ToJSON())
 }

@@ -114,7 +114,6 @@ func (r *repo) List() []metrics.Metric {
 			float64(v),
 			0),
 		)
-
 	}
 
 	r.cMtx.Lock()
