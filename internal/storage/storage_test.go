@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -123,7 +122,6 @@ func Test_repo_Get(t *testing.T) {
 				},
 			}
 			got, err := r.Get(tt.metric)
-			fmt.Println(tt.metric, r.G)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {
