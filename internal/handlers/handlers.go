@@ -116,7 +116,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	ret, err := h.r.Get(m)
 	if err != nil {
-		log.Println(err)
+		log.Println(err, m)
 		switch {
 		case errors.As(err, &errrs.InvalidHash):
 			http.Error(w, err.Error(), http.StatusBadRequest)
