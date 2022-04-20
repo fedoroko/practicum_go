@@ -39,11 +39,6 @@ type repo struct {
 }
 
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
-	if r.cfg.Key != "" {
-		if ok, _ := m.CheckHash(r.cfg.Key); !ok {
-			return m, errrs.ThrowInvalidHashError()
-		}
-	}
 	switch m.Type() {
 	case metrics.GaugeType:
 		r.gMtx.Lock()
