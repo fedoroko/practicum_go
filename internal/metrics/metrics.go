@@ -26,7 +26,7 @@ type Metric interface {
 	SetFloat64(float64)
 	SetInt64(int64)
 
-	SetHash(string)
+	SetHash(string) error
 	CheckHash(string) (bool, error)
 
 	ToString() string
@@ -71,13 +71,23 @@ func (m *metric) SetInt64(i int64) {
 	m.Delta = &i
 }
 
-func (m *metric) SetHash(key string) {
-	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
+func (m *metric) SetHash(key string) error {
+	var data []byte
+	switch m.Type() {
+	case GaugeType:
+		v, _ := m.Float64Value()
+		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
+	case CounterType:
+		v, _ := m.Int64Value()
+		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
+	}
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(data)
 	hash := h.Sum(nil)
 	m.Hash = hex.EncodeToString(hash)
+
+	return nil
 }
 
 func (m *metric) CheckHash(key string) (bool, error) {
@@ -85,7 +95,15 @@ func (m *metric) CheckHash(key string) (bool, error) {
 		return true, nil
 	}
 
-	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
+	var data []byte
+	switch m.Type() {
+	case GaugeType:
+		v, _ := m.Float64Value()
+		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
+	case CounterType:
+		v, _ := m.Int64Value()
+		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
+	}
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(data)
