@@ -301,11 +301,15 @@ func requestHandler(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) 
 
 func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	url := "http://" + cfg.Address + "/update"
+	if cfg.Key != "" {
+		if err := m.SetHash(cfg.Key); err != nil {
+			log.Println(err)
+		}
+	}
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println(string(data))
 	resp, err := c.R().
 		SetHeader("Content-Type", ContentTypeJSON).
 		SetBody(data).
@@ -316,7 +320,7 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Fatal("Wrong Status Code")
+		log.Fatal("Wrong Status Code", resp.StatusCode())
 	}
 }
 

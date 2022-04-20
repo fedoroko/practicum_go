@@ -29,13 +29,13 @@ type gauge float64
 type counter int64
 
 type repo struct {
-	G             map[string]gauge `json:"gauge"`
-	gMtx          sync.RWMutex
-	C             map[string]counter `json:"counter"`
-	cMtx          sync.RWMutex
-	storeInterval time.Duration
-	producer      *producer
-	consumer      *consumer
+	G        map[string]gauge `json:"gauge"`
+	gMtx     sync.RWMutex
+	C        map[string]counter `json:"counter"`
+	cMtx     sync.RWMutex
+	cfg      *config.ServerConfig
+	producer *producer
+	consumer *consumer
 }
 
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
@@ -43,28 +43,42 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 	case metrics.GaugeType:
 		r.gMtx.Lock()
 		defer r.gMtx.Unlock()
-		if v, ok := r.G[m.Name()]; ok {
-			m.SetFloat64(float64(v))
-			return m, nil
+		v, ok := r.G[m.Name()]
+		if !ok {
+			return m, errors.New("not found")
 		}
+		m.SetFloat64(float64(v))
 
 	case metrics.CounterType:
 		r.cMtx.Lock()
 		defer r.cMtx.Unlock()
-		if v, ok := r.C[m.Name()]; ok {
-			m.SetInt64(int64(v))
-			return m, nil
+		v, ok := r.C[m.Name()]
+		if !ok {
+			return m, errors.New("not found")
 		}
+		m.SetInt64(int64(v))
 
 	default:
 		return m, errrs.ThrowInvalidTypeError(m.Type())
 	}
 
-	return m, errors.New("not found")
+	if r.cfg.Key != "" {
+		if err := m.SetHash(r.cfg.Key); err != nil {
+			log.Println(err)
+		}
+	}
+
+	return m, nil
 }
 
 func (r *repo) Set(m metrics.Metric) error {
-	if r.storeInterval == 0 {
+	if r.cfg.Key != "" {
+		if ok := m.CheckHash(r.cfg.Key); !ok {
+			return errrs.ThrowInvalidHashError()
+		}
+	}
+
+	if r.cfg.StoreInterval == 0 {
 		defer r.producer.write(r)
 	}
 
@@ -79,7 +93,6 @@ func (r *repo) Set(m metrics.Metric) error {
 		defer r.gMtx.RUnlock()
 
 		r.G[m.Name()] = gauge(v)
-		return nil
 
 	case metrics.CounterType:
 		v, err := m.Int64Value()
@@ -96,10 +109,11 @@ func (r *repo) Set(m metrics.Metric) error {
 			r.C[m.Name()] = counter(v)
 		}
 
-		return nil
+	default:
+		return errrs.ThrowInvalidTypeError(m.Type())
 	}
 
-	return errrs.ThrowInvalidTypeError(m.Type())
+	return nil
 }
 
 func (r *repo) List() []metrics.Metric {
@@ -140,11 +154,11 @@ func (r *repo) restore() error {
 }
 
 func (r *repo) listenAndWrite() {
-	if r.storeInterval == 0 {
+	if r.cfg.StoreInterval == 0 {
 		return
 	}
 
-	t := time.NewTicker(r.storeInterval)
+	t := time.NewTicker(r.cfg.StoreInterval)
 	defer t.Stop()
 	for range t.C {
 		r.producer.write(r)
@@ -171,13 +185,13 @@ func repoInterface(cfg *config.ServerConfig) *repo {
 		panic(err)
 	}
 	return &repo{
-		G:             make(map[string]gauge),
-		gMtx:          sync.RWMutex{},
-		C:             make(map[string]counter),
-		cMtx:          sync.RWMutex{},
-		storeInterval: cfg.StoreInterval,
-		producer:      p,
-		consumer:      c,
+		G:        make(map[string]gauge),
+		gMtx:     sync.RWMutex{},
+		C:        make(map[string]counter),
+		cMtx:     sync.RWMutex{},
+		cfg:      cfg,
+		producer: p,
+		consumer: c,
 	}
 }
 

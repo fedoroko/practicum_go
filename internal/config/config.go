@@ -18,6 +18,7 @@ type ServerConfig struct {
 	Restore       bool          `env:"RESTORE"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
 	StoreFile     string        `env:"STORE_FILE"`
+	Key           string        `env:"KEY"`
 }
 
 func (s *ServerConfig) Flags() *ServerConfig {
@@ -25,6 +26,7 @@ func (s *ServerConfig) Flags() *ServerConfig {
 	flag.BoolVar(&s.Restore, "r", true, "Restore previous db")
 	flag.DurationVar(&s.StoreInterval, "i", time.Second*300, "Store interval")
 	flag.StringVar(&s.StoreFile, "f", "/tmp/devops-metrics-db.json", "Store file path")
+	flag.StringVar(&s.Key, "k", "", "Key for hashing")
 	flag.Parse()
 
 	return s
@@ -54,12 +56,14 @@ type AgentConfig struct {
 	ReportInterval   time.Duration `env:"REPORT_INTERVAL"`
 	ShutdownInterval time.Duration
 	ContentType      string
+	Key              string `env:"KEY"`
 }
 
 func (a *AgentConfig) Flags() *AgentConfig {
 	flag.StringVar(&a.Address, "a", "127.0.0.1:8080", "Host address")
 	flag.DurationVar(&a.PollInterval, "p", time.Second*2, "Poll count interval")
 	flag.DurationVar(&a.ReportInterval, "r", time.Second*10, "Report interval")
+	flag.StringVar(&a.Key, "k", "", "Key for hashing")
 	flag.Parse()
 
 	return a

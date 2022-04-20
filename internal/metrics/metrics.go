@@ -1,6 +1,9 @@
 package metrics
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +28,9 @@ type Metric interface {
 	SetFloat64(float64)
 	SetInt64(int64)
 
+	SetHash(string) error
+	CheckHash(string) bool
+
 	ToString() string
 	ToJSON() []byte
 }
@@ -34,6 +40,7 @@ type metric struct {
 	MType string   `json:"type"`
 	Delta *int64   `json:"delta,omitempty"`
 	Value *float64 `json:"value,omitempty"`
+	Hash  string   `json:"hash,omitempty"`
 }
 
 func (m *metric) Name() string {
@@ -64,6 +71,64 @@ func (m *metric) SetFloat64(f float64) {
 
 func (m *metric) SetInt64(i int64) {
 	m.Delta = &i
+}
+
+func (m *metric) SetHash(key string) error {
+	var data []byte
+
+	switch m.Type() {
+	case GaugeType:
+		v, err := m.Float64Value()
+		if err != nil {
+			return err
+		}
+		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
+	case CounterType:
+		v, err := m.Int64Value()
+		if err != nil {
+			return err
+		}
+		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
+	}
+
+	h := hmac.New(sha256.New, []byte(key))
+	h.Write(data)
+	hash := h.Sum(nil)
+	m.Hash = hex.EncodeToString(hash)
+
+	return nil
+}
+
+func (m *metric) CheckHash(key string) bool {
+	if m.Hash == "" {
+		return true
+	}
+	var data []byte
+
+	switch m.Type() {
+	case GaugeType:
+		v, err := m.Float64Value()
+		if err != nil {
+			return false
+		}
+		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
+	case CounterType:
+		v, err := m.Int64Value()
+		if err != nil {
+			return false
+		}
+		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
+	}
+
+	h := hmac.New(sha256.New, []byte(key))
+	h.Write(data)
+	hash := h.Sum(nil)
+	currHash, err := hex.DecodeString(m.Hash)
+	if err != nil {
+		return false
+	}
+
+	return hmac.Equal(hash, currHash)
 }
 
 func (m *metric) ToString() string {
