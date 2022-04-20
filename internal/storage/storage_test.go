@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
@@ -77,7 +78,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "positive",
 			fields: fields{
 				g: map[string]gauge{
-					"alloc": gauge(1),
+					"Alloc": gauge(1),
 				},
 			},
 			metric:   metrics.New("Alloc", "gauge", 1, 0),
@@ -89,7 +90,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong type",
 			fields: fields{
 				g: map[string]gauge{
-					"alloc": gauge(1),
+					"Alloc": gauge(1),
 				},
 			},
 			metric:   metrics.New("Alloc", "int", 0, 0),
@@ -101,7 +102,7 @@ func Test_repo_Get(t *testing.T) {
 			name: "wrong name",
 			fields: fields{
 				g: map[string]gauge{
-					"alloc": gauge(1),
+					"Alloc": gauge(1),
 				},
 			},
 			metric:   metrics.New("zAlloc", "gauge", 0, 0),
@@ -122,6 +123,7 @@ func Test_repo_Get(t *testing.T) {
 				},
 			}
 			got, err := r.Get(tt.metric)
+			fmt.Println(tt.metric, r.G)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

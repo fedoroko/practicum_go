@@ -306,7 +306,6 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 			log.Println(err)
 		}
 	}
-	log.Println(m)
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)
@@ -323,6 +322,7 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	if resp.StatusCode() != http.StatusOK {
 		log.Fatal("Wrong Status Code", resp.StatusCode())
 	}
+	log.Println(m, resp.StatusCode())
 }
 
 func plainRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
