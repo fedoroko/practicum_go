@@ -26,7 +26,7 @@ type Metric interface {
 	SetFloat64(float64)
 	SetInt64(int64)
 
-	SetHash(string) error
+	SetHash(string)
 	CheckHash(string) (bool, error)
 
 	ToString() string
@@ -71,15 +71,13 @@ func (m *metric) SetInt64(i int64) {
 	m.Delta = &i
 }
 
-func (m *metric) SetHash(key string) error {
+func (m *metric) SetHash(key string) {
 	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(data)
 	hash := h.Sum(nil)
 	m.Hash = hex.EncodeToString(hash)
-
-	return nil
 }
 
 func (m *metric) CheckHash(key string) (bool, error) {

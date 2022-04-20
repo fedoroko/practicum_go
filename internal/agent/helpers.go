@@ -302,9 +302,7 @@ func requestHandler(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) 
 func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	url := "http://" + cfg.Address + "/update"
 	if cfg.Key != "" {
-		if err := m.SetHash(cfg.Key); err != nil {
-			log.Println(err)
-		}
+		m.SetHash(cfg.Key)
 	}
 	data, err := json.Marshal(m)
 	if err != nil {

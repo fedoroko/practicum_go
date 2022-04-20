@@ -106,7 +106,7 @@ func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 
 func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	m, err := metrics.FromJSON(r.Body)
-	log.Println(m, " server GET")
+	log.Println(m, m.ToString(), " server GET")
 	if err != nil {
 		switch {
 		case errors.As(err, &errrs.InvalidType):
@@ -119,7 +119,12 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	ret, err := h.r.Get(m)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, err.Error(), http.StatusNotFound)
+		switch {
+		case errors.As(err, &errrs.InvalidHash):
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			http.Error(w, err.Error(), http.StatusNotFound)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -72,9 +72,7 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 	}
 
 	if r.cfg.Key != "" {
-		if err := m.SetHash(r.cfg.Key); err != nil {
-			log.Println(err)
-		}
+		m.SetHash(r.cfg.Key)
 	}
 
 	return m, nil
