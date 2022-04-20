@@ -306,6 +306,7 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 			log.Println(err)
 		}
 	}
+	log.Println(m)
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)

@@ -117,6 +117,9 @@ func Test_repo_Get(t *testing.T) {
 				gMtx: sync.RWMutex{},
 				C:    tt.fields.c,
 				cMtx: sync.RWMutex{},
+				cfg: &config.ServerConfig{
+					Key: "",
+				},
 			}
 			got, err := r.Get(tt.metric)
 			if tt.wantErr {

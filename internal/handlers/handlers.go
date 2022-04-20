@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -59,6 +60,7 @@ func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	m, err := metrics.FromJSON(r.Body)
+	log.Println(m, " server")
 	if err != nil {
 		switch {
 		case errors.As(err, &errrs.InvalidType):
@@ -70,6 +72,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.r.Set(m); err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
