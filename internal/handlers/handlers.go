@@ -73,7 +73,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	if err = h.r.Set(m); err != nil {
 		log.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusNoContent)
 	}
 
 	w.Header().Set("Content-Type", "text/plain")

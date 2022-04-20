@@ -91,10 +91,6 @@ func (m *metric) SetHash(key string) error {
 }
 
 func (m *metric) CheckHash(key string) (bool, error) {
-	if m.Hash == "" {
-		return true, nil
-	}
-
 	var data []byte
 	switch m.Type() {
 	case GaugeType:
