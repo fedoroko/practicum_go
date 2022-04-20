@@ -74,22 +74,7 @@ func (m *metric) SetInt64(i int64) {
 }
 
 func (m *metric) SetHash(key string) error {
-	var data []byte
-
-	switch m.Type() {
-	case GaugeType:
-		v, err := m.Float64Value()
-		if err != nil {
-			return err
-		}
-		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
-	case CounterType:
-		v, err := m.Int64Value()
-		if err != nil {
-			return err
-		}
-		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
-	}
+	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(data)
@@ -101,24 +86,10 @@ func (m *metric) SetHash(key string) error {
 
 func (m *metric) CheckHash(key string) bool {
 	if m.Hash == "" {
-		return false
+		return true
 	}
-	var data []byte
 
-	switch m.Type() {
-	case GaugeType:
-		v, err := m.Float64Value()
-		if err != nil {
-			return false
-		}
-		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
-	case CounterType:
-		v, err := m.Int64Value()
-		if err != nil {
-			return false
-		}
-		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
-	}
+	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
 
 	h := hmac.New(sha256.New, []byte(key))
 	h.Write(data)
