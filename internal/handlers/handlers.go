@@ -71,7 +71,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.r.Set(m); err != nil {
-		log.Println(err)
+		log.Println(err, m, m.ToString(), "yolo_hash")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
@@ -116,7 +116,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	ret, err := h.r.Get(m)
 	if err != nil {
-		log.Println(err, m)
+		log.Println(err, m, "yolo_hash")
 		switch {
 		case errors.As(err, &errrs.InvalidHash):
 			http.Error(w, err.Error(), http.StatusBadRequest)
