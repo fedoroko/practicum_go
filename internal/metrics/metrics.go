@@ -101,7 +101,7 @@ func (m *metric) SetHash(key string) error {
 
 func (m *metric) CheckHash(key string) bool {
 	if m.Hash == "" {
-		return true
+		return false
 	}
 	var data []byte
 
