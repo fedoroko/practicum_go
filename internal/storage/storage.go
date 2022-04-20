@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -40,7 +39,6 @@ type repo struct {
 }
 
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
-	fmt.Println(r.G)
 	if r.cfg.Key != "" {
 		if ok, _ := m.CheckHash(r.cfg.Key); !ok {
 			return m, errrs.ThrowInvalidHashError()

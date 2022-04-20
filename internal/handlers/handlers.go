@@ -60,7 +60,6 @@ func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 
 func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	m, err := metrics.FromJSON(r.Body)
-	log.Println(m, " server")
 	if err != nil {
 		switch {
 		case errors.As(err, &errrs.InvalidType):
@@ -73,7 +72,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	if err = h.r.Set(m); err != nil {
 		log.Println(err)
-		http.Error(w, err.Error(), http.StatusNoContent)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -106,7 +105,6 @@ func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 
 func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	m, err := metrics.FromJSON(r.Body)
-	log.Println(m, m.ToString(), " server GET")
 	if err != nil {
 		switch {
 		case errors.As(err, &errrs.InvalidType):
@@ -114,8 +112,8 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
-
 	}
+
 	ret, err := h.r.Get(m)
 	if err != nil {
 		log.Println(err)
@@ -129,5 +127,4 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret.ToJSON())
-	log.Println(ret.ToJSON())
 }
