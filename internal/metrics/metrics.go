@@ -7,11 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/fedoroko/practicum_go/internal/errrs"
 	"io"
 	"strconv"
-	"strings"
-
-	"github.com/fedoroko/practicum_go/internal/errrs"
 )
 
 const (
@@ -29,7 +27,7 @@ type Metric interface {
 	SetInt64(int64)
 
 	SetHash(string) error
-	CheckHash(string) bool
+	CheckHash(string) (bool, error)
 
 	ToString() string
 	ToJSON() []byte
@@ -44,7 +42,7 @@ type metric struct {
 }
 
 func (m *metric) Name() string {
-	return strings.ToLower(m.ID)
+	return m.ID
 }
 
 func (m *metric) Type() string {
@@ -84,9 +82,9 @@ func (m *metric) SetHash(key string) error {
 	return nil
 }
 
-func (m *metric) CheckHash(key string) bool {
+func (m *metric) CheckHash(key string) (bool, error) {
 	if m.Hash == "" {
-		return true
+		return true, nil
 	}
 
 	data := []byte(fmt.Sprintf("%s:counter:%s", m.Name(), m.ToString()))
@@ -96,10 +94,10 @@ func (m *metric) CheckHash(key string) bool {
 	hash := h.Sum(nil)
 	currHash, err := hex.DecodeString(m.Hash)
 	if err != nil {
-		return false
+		return false, err
 	}
 
-	return hmac.Equal(hash, currHash)
+	return hmac.Equal(hash, currHash), nil
 }
 
 func (m *metric) ToString() string {

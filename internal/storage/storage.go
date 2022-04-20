@@ -40,8 +40,8 @@ type repo struct {
 
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 	if r.cfg.Key != "" {
-		if ok := m.CheckHash(r.cfg.Key); !ok {
-			return m, errrs.ThrowInvalidHashError()
+		if ok, err := m.CheckHash(r.cfg.Key); !ok {
+			return m, err
 		}
 	}
 	switch m.Type() {
@@ -78,8 +78,8 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 
 func (r *repo) Set(m metrics.Metric) error {
 	if r.cfg.Key != "" {
-		if ok := m.CheckHash(r.cfg.Key); !ok {
-			return errrs.ThrowInvalidHashError()
+		if ok, err := m.CheckHash(r.cfg.Key); !ok {
+			return err
 		}
 	}
 
