@@ -18,7 +18,7 @@ import (
 func Run(cfg *config.ServerConfig) {
 	db := storage.New(cfg)
 	defer db.Close()
-
+	log.Println(cfg.Key)
 	r := router(&db)
 
 	server := &http.Server{
