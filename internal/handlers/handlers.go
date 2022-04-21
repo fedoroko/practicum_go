@@ -125,3 +125,11 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret.ToJSON())
 }
+
+func (h *repoHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	if err := h.r.Ping(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(""))
+}

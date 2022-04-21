@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"context"
 	"errors"
+	"github.com/jackc/pgx/v4"
 	"io"
 	"log"
 	"os"
@@ -21,6 +23,7 @@ type Repository interface {
 	restore() error
 	listenAndWrite()
 
+	Ping() error
 	Close() error
 }
 
@@ -161,6 +164,16 @@ func (r *repo) listenAndWrite() {
 	for range t.C {
 		r.producer.write(r)
 	}
+}
+
+func (r *repo) Ping() error {
+	conn, err := pgx.Connect(context.Background(), r.cfg.Database)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close(context.Background())
+	return nil
 }
 
 func (r *repo) Close() error {
