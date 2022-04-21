@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	"io"
-	"log"
 	"strconv"
 )
 
@@ -87,7 +86,6 @@ func (m *metric) SetHash(key string) error {
 	h.Write(data)
 	hash := h.Sum(nil)
 	m.Hash = hex.EncodeToString(hash)
-	log.Println(string(data), "yolo_data")
 	return nil
 }
 
@@ -99,7 +97,7 @@ func (m *metric) CheckHash(key string) (bool, error) {
 	switch m.Type() {
 	case GaugeType:
 		v, _ := m.Float64Value()
-		data = []byte(fmt.Sprintf("%s:counter:%f", m.Name(), v))
+		data = []byte(fmt.Sprintf("%s:gauge:%f", m.Name(), v))
 	case CounterType:
 		v, _ := m.Int64Value()
 		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -74,7 +73,6 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	fmt.Println(string(m.ToJSON()))
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(""))
 }
@@ -123,7 +121,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		}
 	}
-	fmt.Println(string(ret.ToJSON()))
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret.ToJSON())
 }
