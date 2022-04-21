@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -72,10 +71,10 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.r.Set(m); err != nil {
-		log.Println(err, m, m.ToString(), "yolo_hash")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
+	fmt.Println(string(m.ToJSON()))
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(""))
 }
@@ -117,7 +116,6 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 
 	ret, err := h.r.Get(m)
 	if err != nil {
-		log.Println(err, m, "yolo_hash")
 		switch {
 		case errors.As(err, &errrs.InvalidHash):
 			http.Error(w, err.Error(), http.StatusBadRequest)
