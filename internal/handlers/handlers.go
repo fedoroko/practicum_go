@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -124,7 +125,7 @@ func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusNotFound)
 		}
 	}
-
+	fmt.Println(string(ret.ToJSON()))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret.ToJSON())
 }
