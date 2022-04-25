@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	"io"
@@ -20,8 +19,8 @@ const (
 type Metric interface {
 	Name() string
 	Type() string
-	Float64Value() (float64, error)
-	Int64Value() (int64, error)
+	Float64Value() float64
+	Int64Value() int64
 
 	SetFloat64(float64)
 	SetInt64(int64)
@@ -49,18 +48,18 @@ func (m *metric) Type() string {
 	return m.MType
 }
 
-func (m *metric) Float64Value() (float64, error) {
+func (m *metric) Float64Value() float64 {
 	if m.Value == nil {
-		return 0, errors.New("empty value")
+		return 0
 	}
-	return *m.Value, nil
+	return *m.Value
 }
 
-func (m *metric) Int64Value() (int64, error) {
+func (m *metric) Int64Value() int64 {
 	if m.Delta == nil {
-		return 0, errors.New("empty value")
+		return 0
 	}
-	return *m.Delta, nil
+	return *m.Delta
 }
 
 func (m *metric) SetFloat64(f float64) {
@@ -103,11 +102,9 @@ func getHashSrc(m *metric) []byte {
 	var data []byte
 	switch m.Type() {
 	case GaugeType:
-		v, _ := m.Float64Value()
-		data = []byte(fmt.Sprintf("%s:gauge:%f", m.Name(), v))
+		data = []byte(fmt.Sprintf("%s:gauge:%f", m.Name(), m.Float64Value()))
 	case CounterType:
-		v, _ := m.Int64Value()
-		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), v))
+		data = []byte(fmt.Sprintf("%s:counter:%d", m.Name(), m.Int64Value()))
 	}
 
 	return data

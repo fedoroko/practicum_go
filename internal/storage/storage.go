@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"context"
 	"errors"
-	"github.com/jackc/pgx/v4"
 	"io"
 	"log"
 	"os"
@@ -18,10 +16,7 @@ import (
 type Repository interface {
 	Get(m metrics.Metric) (metrics.Metric, error)
 	Set(m metrics.Metric) error
-	List() []metrics.Metric
-
-	restore() error
-	listenAndWrite()
+	List() ([]metrics.Metric, error)
 
 	Ping() error
 	Close() error
@@ -85,29 +80,19 @@ func (r *repo) Set(m metrics.Metric) error {
 
 	switch m.Type() {
 	case metrics.GaugeType:
-		v, err := m.Float64Value()
-		if err != nil {
-			return err
-		}
-
 		r.gMtx.RLock()
 		defer r.gMtx.RUnlock()
 
-		r.G[m.Name()] = gauge(v)
+		r.G[m.Name()] = gauge(m.Float64Value())
 
 	case metrics.CounterType:
-		v, err := m.Int64Value()
-		if err != nil {
-			return err
-		}
-
 		r.cMtx.RLock()
 		defer r.cMtx.RUnlock()
 
 		if cur, ok := r.C[m.Name()]; ok {
-			r.C[m.Name()] = cur + counter(v)
+			r.C[m.Name()] = cur + counter(m.Int64Value())
 		} else {
-			r.C[m.Name()] = counter(v)
+			r.C[m.Name()] = counter(m.Int64Value())
 		}
 
 	default:
@@ -117,7 +102,7 @@ func (r *repo) Set(m metrics.Metric) error {
 	return nil
 }
 
-func (r *repo) List() []metrics.Metric {
+func (r *repo) List() ([]metrics.Metric, error) {
 	var ret []metrics.Metric
 
 	r.gMtx.Lock()
@@ -142,7 +127,7 @@ func (r *repo) List() []metrics.Metric {
 		)
 	}
 
-	return ret
+	return ret, nil
 }
 
 func (r *repo) restore() error {
@@ -167,12 +152,6 @@ func (r *repo) listenAndWrite() {
 }
 
 func (r *repo) Ping() error {
-	conn, err := pgx.Connect(context.Background(), r.cfg.Database)
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close(context.Background())
 	return nil
 }
 

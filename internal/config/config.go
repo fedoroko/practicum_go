@@ -28,7 +28,7 @@ func (s *ServerConfig) Flags() *ServerConfig {
 	flag.DurationVar(&s.StoreInterval, "i", time.Second*300, "Store interval")
 	flag.StringVar(&s.StoreFile, "f", "/tmp/devops-metrics-db.json", "Store file path")
 	flag.StringVar(&s.Key, "k", "", "Key for hashing")
-	flag.StringVar(&s.Database, "d", "postgresql://localhost:5432", "Database DSN")
+	flag.StringVar(&s.Database, "d", "postgresql://localhost:5432/practicum", "Database DSN")
 	flag.Parse()
 
 	return s

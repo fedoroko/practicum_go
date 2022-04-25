@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,7 +25,10 @@ func NewRepoHandler(r storage.Repository) *repoHandler {
 func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
-	data := h.r.List()
+	data, err := h.r.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	html := "<div><ul>"
 	for i := range data {
 		html += "<li>" + data[i].Name() + " - " + data[i].ToString() + "</li>"
@@ -70,6 +74,7 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.r.Set(m); err != nil {
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
