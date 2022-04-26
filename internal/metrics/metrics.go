@@ -203,3 +203,11 @@ func NewOmitEmpty(n string, t string, v *float64, d *int64) Metric {
 		Delta: d,
 	}
 }
+
+func PointerFromFloat64(v float64) *float64 {
+	return &v
+}
+
+func PointerFromInt64(v int64) *int64 {
+	return &v
+}

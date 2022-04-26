@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -53,210 +54,210 @@ func (s *stats) collect() {
 				s.mtx.RLock()
 				defer s.mtx.RUnlock()
 				s.metrics = []metrics.Metric{
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"Alloc",
 						"gauge",
-						float64(currentStats.Alloc),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.Alloc)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"BuckHashSys",
 						"gauge",
-						float64(currentStats.BuckHashSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.BuckHashSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"Frees",
 						"gauge",
-						float64(currentStats.Frees),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.Frees)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"GCCPUFraction",
 						"gauge",
-						currentStats.GCCPUFraction,
-						0,
+						metrics.PointerFromFloat64(currentStats.GCCPUFraction),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"GCSys",
 						"gauge",
-						float64(currentStats.GCSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.GCSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapAlloc",
 						"gauge",
-						float64(currentStats.HeapAlloc),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapAlloc)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapIdle",
 						"gauge",
-						float64(currentStats.HeapIdle),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapIdle)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapInuse",
 						"gauge",
-						float64(currentStats.HeapInuse),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapInuse)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapObjects",
 						"gauge",
-						float64(currentStats.HeapObjects),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapObjects)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapReleased",
 						"gauge",
-						float64(currentStats.HeapReleased),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapReleased)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"HeapSys",
 						"gauge",
-						float64(currentStats.HeapSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.HeapSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"LastGC",
 						"gauge",
-						float64(currentStats.LastGC),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.LastGC)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"Lookups",
 						"gauge",
-						float64(currentStats.Lookups),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.Lookups)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"MCacheInuse",
 						"gauge",
-						float64(currentStats.MCacheInuse),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.MCacheInuse)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"MCacheSys",
 						"gauge",
-						float64(currentStats.MCacheSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.MCacheSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"MSpanInuse",
 						"gauge",
-						float64(currentStats.MSpanInuse),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.MSpanInuse)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"MSpanSys",
 						"gauge",
-						float64(currentStats.MSpanSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.MSpanSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"Mallocs",
 						"gauge",
-						float64(currentStats.Mallocs),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.Mallocs)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"NextGC",
 						"gauge",
-						float64(currentStats.NextGC),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.NextGC)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"NumForcedGC",
 						"gauge",
-						float64(currentStats.NumForcedGC),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.NumForcedGC)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"NumGC",
 						"gauge",
-						float64(currentStats.NumGC),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.NumGC)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"OtherSys",
 						"gauge",
-						float64(currentStats.OtherSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.OtherSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"PauseTotalNs",
 						"gauge",
-						float64(currentStats.PauseTotalNs),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.PauseTotalNs)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"StackInuse",
 						"gauge",
-						float64(currentStats.StackInuse),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.StackInuse)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"StackSys",
 						"gauge",
-						float64(currentStats.StackSys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.StackSys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"Sys",
 						"gauge",
-						float64(currentStats.Sys),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.Sys)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"TotalAlloc",
 						"gauge",
-						float64(currentStats.TotalAlloc),
-						0,
+						metrics.PointerFromFloat64(float64(currentStats.TotalAlloc)),
+						nil,
 					),
 
-					metrics.New(
+					metrics.NewOmitEmpty(
 						"RandomValue",
 						"gauge",
-						rand.Float64(),
-						0,
+						metrics.PointerFromFloat64(rand.Float64()),
+						nil,
 					),
 				}
 
 				s.count += int64(len(s.metrics) - 1)
 				s.metrics = append(
-					s.metrics, metrics.New(
+					s.metrics, metrics.NewOmitEmpty(
 						"PollCount",
 						"counter",
-						0,
-						s.count,
+						nil,
+						metrics.PointerFromInt64(s.count),
 					),
 				)
 			}()
@@ -304,6 +305,7 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	if cfg.Key != "" {
 		m.SetHash(cfg.Key)
 	}
+	fmt.Println(m)
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)
