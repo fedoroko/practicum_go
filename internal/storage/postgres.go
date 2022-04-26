@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"github.com/fedoroko/practicum_go/internal/errrs"
 	_ "github.com/jackc/pgx/v4/stdlib"
 
 	"github.com/fedoroko/practicum_go/internal/config"
@@ -10,6 +11,7 @@ import (
 
 type postgres struct {
 	conn *sql.DB
+	cfg  *config.ServerConfig
 }
 
 type tempMetric struct {
@@ -37,11 +39,19 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 	if err != nil {
 		return m, err
 	}
-
-	return t.toMetric(), nil
+	ret := t.toMetric()
+	if p.cfg.Key != "" {
+		ret.SetHash(p.cfg.Key)
+	}
+	return ret, nil
 }
 
 func (p *postgres) Set(m metrics.Metric) error {
+	if p.cfg.Key != "" {
+		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
+			return errrs.ThrowInvalidHashError()
+		}
+	}
 	var exists bool
 	checkQuery := `SELECT EXISTS(
 						SELECT 1 FROM metrics
@@ -150,5 +160,6 @@ func postgresInterface(cfg *config.ServerConfig) *postgres {
 
 	return &postgres{
 		conn: conn,
+		cfg:  cfg,
 	}
 }
