@@ -16,6 +16,7 @@ import (
 )
 
 func Run(cfg *config.ServerConfig) {
+	log.Println(cfg, "CONFIG >>>")
 	db := storage.New(cfg)
 	defer db.Close()
 
