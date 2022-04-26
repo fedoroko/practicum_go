@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"sync"
@@ -24,17 +25,8 @@ type tempMetric struct {
 }
 
 func (t *tempMetric) toMetric() metrics.Metric {
-	var f *float64
-	var i *int64
-	switch t.mtype {
-	case metrics.GaugeType:
-		f = t.value
-	case metrics.CounterType:
-		i = t.delta
-	}
-
 	return metrics.NewOmitEmpty(
-		t.id, t.mtype, f, i,
+		t.id, t.mtype, t.value, t.delta,
 	)
 }
 
@@ -50,6 +42,7 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 	if err != nil {
 		return m, err
 	}
+	fmt.Println(t)
 	ret := t.toMetric()
 	if p.cfg.Key != "" {
 		ret.SetHash(p.cfg.Key)
