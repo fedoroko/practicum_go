@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"sync"
@@ -60,7 +59,6 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 }
 
 func (p *postgres) Set(m metrics.Metric) error {
-	fmt.Println(*m.Float64Value(), *m.Int64Value())
 	if p.cfg.Key != "" {
 		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
 			return errrs.ThrowInvalidHashError()

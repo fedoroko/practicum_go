@@ -19,8 +19,8 @@ const (
 type Metric interface {
 	Name() string
 	Type() string
-	Float64Value() *float64
-	Int64Value() *int64
+	Float64Value() float64
+	Int64Value() int64
 
 	SetFloat64(float64)
 	SetInt64(int64)
@@ -48,12 +48,18 @@ func (m *metric) Type() string {
 	return m.MType
 }
 
-func (m *metric) Float64Value() *float64 {
-	return m.Value
+func (m *metric) Float64Value() float64 {
+	if m.Value == nil {
+		return 0
+	}
+	return *m.Value
 }
 
-func (m *metric) Int64Value() *int64 {
-	return m.Delta
+func (m *metric) Int64Value() int64 {
+	if m.Delta == nil {
+		return 0
+	}
+	return *m.Delta
 }
 
 func (m *metric) SetFloat64(f float64) {
