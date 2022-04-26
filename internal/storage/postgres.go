@@ -151,7 +151,7 @@ func postgresInterface(cfg *config.ServerConfig) *postgres {
 							name VARCHAR (50) NOT NULL,
 							type VARCHAR (20) NOT NULL,
 							value DOUBLE PRECISION,
-							delta INT,
+							delta BIGINT,
 							updated_at TIMESTAMP
 						);`
 		_, err = conn.Exec(createQuery)
