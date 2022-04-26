@@ -83,16 +83,16 @@ func (r *repo) Set(m metrics.Metric) error {
 		r.gMtx.RLock()
 		defer r.gMtx.RUnlock()
 
-		r.G[m.Name()] = gauge(m.Float64Value())
+		r.G[m.Name()] = gauge(*m.Float64Value())
 
 	case metrics.CounterType:
 		r.cMtx.RLock()
 		defer r.cMtx.RUnlock()
 
 		if cur, ok := r.C[m.Name()]; ok {
-			r.C[m.Name()] = cur + counter(m.Int64Value())
+			r.C[m.Name()] = cur + counter(*m.Int64Value())
 		} else {
-			r.C[m.Name()] = counter(m.Int64Value())
+			r.C[m.Name()] = counter(*m.Int64Value())
 		}
 
 	default:

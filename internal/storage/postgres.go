@@ -24,8 +24,17 @@ type tempMetric struct {
 }
 
 func (t *tempMetric) toMetric() metrics.Metric {
+	var f *float64
+	var i *int64
+	switch t.mtype {
+	case metrics.GaugeType:
+		f = t.value
+	case metrics.CounterType:
+		i = t.delta
+	}
+
 	return metrics.NewOmitEmpty(
-		t.id, t.mtype, t.value, t.delta,
+		t.id, t.mtype, f, i,
 	)
 }
 
