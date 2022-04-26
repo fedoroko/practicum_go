@@ -30,9 +30,6 @@ func (t *tempMetric) toMetric() metrics.Metric {
 }
 
 func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
 	t := tempMetric{}
 	getQuery := `SELECT name, type, value, delta
 				 FROM metrics
@@ -52,9 +49,6 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 }
 
 func (p *postgres) Set(m metrics.Metric) error {
-	p.mtx.RLock()
-	defer p.mtx.RUnlock()
-
 	if p.cfg.Key != "" {
 		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
 			return errrs.ThrowInvalidHashError()
@@ -74,7 +68,7 @@ func (p *postgres) Set(m metrics.Metric) error {
 
 	if exists {
 		updateQuery := `UPDATE metrics
-						SET value = $1, delta = $2
+						SET value = $1, delta = delta + $2
 						WHERE name = $3
 						AND type = $4;`
 		if _, err = p.conn.Exec(
@@ -104,13 +98,11 @@ func (p *postgres) Set(m metrics.Metric) error {
 }
 
 func (p *postgres) List() ([]metrics.Metric, error) {
-	p.mtx.Lock()
-	defer p.mtx.Unlock()
-
 	var ret []metrics.Metric
 
 	getQuery := `SELECT name, type, value, delta 
-				 FROM metrics;`
+				 FROM metrics
+				 ORDER BY type DESC, name ASC;`
 	rows, err := p.conn.Query(getQuery)
 	if err != nil {
 		return ret, err
