@@ -16,7 +16,7 @@ import (
 )
 
 func Run(cfg *config.ServerConfig) {
-	db := storage.NewPostgres(cfg)
+	db := storage.New(cfg)
 	defer db.Close()
 
 	r := router(&db)

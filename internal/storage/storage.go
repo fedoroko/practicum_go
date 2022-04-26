@@ -186,6 +186,10 @@ func repoInterface(cfg *config.ServerConfig) *repo {
 }
 
 func New(cfg *config.ServerConfig) Repository {
+	if cfg.Database != "" {
+		return postgresInterface(cfg)
+	}
+
 	db := repoInterface(cfg)
 
 	if cfg.Restore {

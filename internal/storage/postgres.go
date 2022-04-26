@@ -111,14 +111,6 @@ func (p *postgres) List() ([]metrics.Metric, error) {
 	return ret, nil
 }
 
-func (p *postgres) restore() error {
-	return nil
-}
-
-func (p *postgres) listenAndWrite() {
-	return
-}
-
 func (p *postgres) Ping() error {
 	return p.conn.Ping()
 }
@@ -127,7 +119,7 @@ func (p *postgres) Close() error {
 	return p.conn.Close()
 }
 
-func PostgresInterface(cfg *config.ServerConfig) *postgres {
+func postgresInterface(cfg *config.ServerConfig) *postgres {
 	conn, err := sql.Open("pgx", cfg.Database)
 	if err != nil {
 		panic(err)
@@ -159,8 +151,4 @@ func PostgresInterface(cfg *config.ServerConfig) *postgres {
 	return &postgres{
 		conn: conn,
 	}
-}
-
-func NewPostgres(cfg *config.ServerConfig) Repository {
-	return PostgresInterface(cfg)
 }
