@@ -83,8 +83,8 @@ func (p *postgres) Set(m metrics.Metric) error {
 						AND type = $4;`
 		if _, err = p.conn.Exec(
 			updateQuery,
-			m.Float64Value(),
-			m.Int64Value(),
+			m.Float64Pointer(),
+			m.Int64Pointer(),
 			m.Name(),
 			m.Type(),
 		); err != nil {
