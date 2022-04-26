@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"sync"
 
 	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/metrics"
@@ -12,6 +13,7 @@ import (
 type postgres struct {
 	conn *sql.DB
 	cfg  *config.ServerConfig
+	mtx  sync.RWMutex
 }
 
 type tempMetric struct {
@@ -28,6 +30,9 @@ func (t *tempMetric) toMetric() metrics.Metric {
 }
 
 func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+
 	t := tempMetric{}
 	getQuery := `SELECT name, type, value, delta
 				 FROM metrics
@@ -47,6 +52,9 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 }
 
 func (p *postgres) Set(m metrics.Metric) error {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
+
 	if p.cfg.Key != "" {
 		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
 			return errrs.ThrowInvalidHashError()
@@ -96,6 +104,9 @@ func (p *postgres) Set(m metrics.Metric) error {
 }
 
 func (p *postgres) List() ([]metrics.Metric, error) {
+	p.mtx.Lock()
+	defer p.mtx.Unlock()
+
 	var ret []metrics.Metric
 
 	getQuery := `SELECT name, type, value, delta 
@@ -161,5 +172,6 @@ func postgresInterface(cfg *config.ServerConfig) *postgres {
 	return &postgres{
 		conn: conn,
 		cfg:  cfg,
+		mtx:  sync.RWMutex{},
 	}
 }
