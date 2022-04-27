@@ -144,15 +144,15 @@ func (h *repoHandler) Ping(w http.ResponseWriter, r *http.Request) {
 
 func (h *repoHandler) UpdatesFunc(w http.ResponseWriter, r *http.Request) {
 	buf, _ := io.ReadAll(r.Body)
-	fmt.Println(string(buf))
+	//fmt.Println(string(buf))
 	ms, err := metrics.ArrFromJSON(bytes.NewBuffer(buf))
 	if err != nil {
-		fmt.Println(err, "h ERR")
+		//fmt.Println(err, "h ERR")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println(ms, "h METRICS")
+	//fmt.Println(ms, "h METRICS")
 	if err = h.r.SetBatch(ms); err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 

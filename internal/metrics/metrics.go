@@ -213,15 +213,15 @@ func FromJSON(j io.Reader) (Metric, error) {
 }
 
 func ArrFromJSON(j io.Reader) ([]Metric, error) {
-	ret := make([]Metric, 0)
-	metrics := make([]metric, 0)
+	metrics := make([]*metric, 0)
 	decoder := json.NewDecoder(j)
 	if err := decoder.Decode(&metrics); err != nil {
-		return ret, err
+		return make([]Metric, 0), err
 	}
 
-	for _, m := range metrics {
-		ret = append(ret, &m)
+	ret := make([]Metric, len(metrics))
+	for i, m := range metrics {
+		ret[i] = Metric(m)
 	}
 
 	return ret, nil
