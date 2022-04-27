@@ -286,7 +286,7 @@ func (s *stats) send() {
 			func() {
 				s.mtx.Lock()
 				defer s.mtx.Unlock()
-				if err := butchRequest(client, s.cfg, s.logger, s.metrics); err != nil {
+				if err := batchRequest(client, s.cfg, s.logger, s.metrics); err != nil {
 					s.logger.Error().Stack().Err(err).Msg("")
 				}
 			}()
@@ -344,7 +344,7 @@ func plainRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logge
 	}
 }
 
-func butchRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, metrics []metrics.Metric) error {
+func batchRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, metrics []metrics.Metric) error {
 	url := "http://" + cfg.Address + "/updates"
 	var data bytes.Buffer
 	encoder := json.NewEncoder(&data)
