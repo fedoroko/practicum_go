@@ -4,12 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"io"
+	"strings"
+
+	_ "github.com/jackc/pgx/v4/stdlib"
+
 	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/errrs"
 	"github.com/fedoroko/practicum_go/internal/metrics"
-	_ "github.com/jackc/pgx/v4/stdlib"
-	"io"
-	"strings"
 )
 
 type postgres struct {
@@ -22,7 +24,7 @@ type postgres struct {
 }
 
 type tempMetric struct {
-	Id    string   `json:"id"`
+	ID    string   `json:"id"`
 	Type  string   `json:"type"`
 	Value *float64 `json:"value,omitempty"`
 	Delta *int64   `json:"delta,omitempty"`
@@ -54,8 +56,8 @@ const (
 )
 
 func (t *tempMetric) toMetric() metrics.Metric {
-	name := t.Id
-	s := strings.Split(t.Id, "::")
+	name := t.ID
+	s := strings.Split(t.ID, "::")
 	if len(s) > 1 {
 		name = s[0]
 	}
@@ -66,8 +68,9 @@ func (t *tempMetric) toMetric() metrics.Metric {
 
 func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 	t := tempMetric{}
-	err := p.getStmt.QueryRow(m.Name(), m.Type()).
-		Scan(&t.Id, &t.Type, &t.Value, &t.Delta)
+
+	err := p.getStmt.QueryRow(m.DBName(), m.Type()).
+		Scan(&t.ID, &t.Type, &t.Value, &t.Delta)
 
 	if err != nil {
 		return m, err
@@ -88,9 +91,8 @@ func (p *postgres) Set(m metrics.Metric) error {
 		}
 	}
 
-	name := m.Name() + "::" + m.Type()
 	_, err := p.upsertStmt.Exec(
-		name,
+		m.DBName(),
 		m.Type(),
 		m.Float64Pointer(),
 		m.Int64Pointer(),
@@ -133,7 +135,7 @@ func (p *postgres) List() ([]metrics.Metric, error) {
 
 	for rows.Next() {
 		t := tempMetric{}
-		if err = rows.Scan(&t.Id, &t.Type, &t.Value, &t.Delta); err != nil {
+		if err = rows.Scan(&t.ID, &t.Type, &t.Value, &t.Delta); err != nil {
 			return ret, err
 		}
 
@@ -182,8 +184,7 @@ func (p *postgres) flush() error {
 	}
 
 	for _, m := range p.buffer {
-		name := m.Name() + "::" + m.Type()
-		if _, err = stmt.Exec(name, m.Type(), m.Float64Pointer(), m.Int64Pointer()); err != nil {
+		if _, err = stmt.Exec(m.DBName(), m.Type(), m.Float64Pointer(), m.Int64Pointer()); err != nil {
 			if err = tx.Rollback(); err != nil {
 				return err
 			}

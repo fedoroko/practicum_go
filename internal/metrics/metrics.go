@@ -18,6 +18,7 @@ const (
 
 type Metric interface {
 	Name() string
+	DBName() string
 	Type() string
 	Float64Value() float64
 	Float64Pointer() *float64
@@ -44,6 +45,10 @@ type metric struct {
 
 func (m *metric) Name() string {
 	return m.ID
+}
+
+func (m *metric) DBName() string {
+	return m.Name() + "::" + m.Type()
 }
 
 func (m *metric) Type() string {

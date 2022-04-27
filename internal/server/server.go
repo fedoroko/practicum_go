@@ -63,8 +63,12 @@ func router(db *storage.Repository) chi.Router {
 		r.Post("/", h.UpdateJSONFunc)
 		r.Post("/{type}/{name}/{value}", h.UpdateFunc)
 	})
-	r.Get("/ping", h.Ping)
-	r.Post("/updates", h.UpdatesFunc)
+	r.Route("/ping", func(r chi.Router) {
+		r.Get("/", h.Ping)
+	})
+	r.Route("/updates", func(r chi.Router) {
+		r.Post("/", h.UpdatesFunc)
+	})
 
 	return r
 }
