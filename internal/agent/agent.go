@@ -43,11 +43,11 @@ func WithContentType(contentType string) option {
 	}
 }
 
-func Run(cfg *config.AgentConfig, opts ...option) {
+func Run(cfg *config.AgentConfig, logger *config.Logger, opts ...option) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	s := newStats(cfg)
+	s := newStats(cfg, logger)
 
 	go s.collect()
 	s.send()

@@ -1,35 +1,42 @@
 package handlers
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/pkgerrors"
 
-	"github.com/fedoroko/practicum_go/internal/errrs"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/metrics"
 	"github.com/fedoroko/practicum_go/internal/storage"
 )
 
 type repoHandler struct {
-	r storage.Repository
+	r      storage.Repository
+	logger *config.Logger
 }
 
-func NewRepoHandler(r storage.Repository) *repoHandler {
+func NewRepoHandler(r storage.Repository, logger *config.Logger) *repoHandler {
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	subLogger := logger.With().Str("Component", "Handler").Logger()
 	return &repoHandler{
-		r: r,
+		r:      r,
+		logger: config.NewLogger(&subLogger),
 	}
 }
 
 func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("IndexFunc")
+
 	w.Header().Set("Content-Type", "text/html")
 
 	data, err := h.r.List()
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	html := "<div><ul>"
 	for i := range data {
@@ -41,22 +48,29 @@ func (h *repoHandler) IndexFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("UpdateFunc")
+
 	t := chi.URLParam(r, "type")
 	n := chi.URLParam(r, "name")
 	v := chi.URLParam(r, "value")
 
 	m, err := metrics.RawWithValue(t, n, v)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		switch {
-		case errors.As(err, &errrs.InvalidType):
+		case errors.As(err, &metrics.InvalidType):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
+		return
 	}
 
 	if err = h.r.Set(m); err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -64,21 +78,24 @@ func (h *repoHandler) UpdateFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("UpdateJSONFunc")
 	m, err := metrics.FromJSON(r.Body)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		switch {
-		case errors.As(err, &errrs.InvalidType):
+		case errors.As(err, &metrics.InvalidType):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
+		return
 	}
 
-	fmt.Println(m)
-
 	if err = h.r.Set(m); err != nil {
-		fmt.Println(err)
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -86,23 +103,31 @@ func (h *repoHandler) UpdateJSONFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("GetFunc")
+
 	t := chi.URLParam(r, "type")
 	n := chi.URLParam(r, "name")
 
 	m, err := metrics.Raw(t, n)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		switch {
-		case errors.As(err, &errrs.InvalidType):
-			e := err.Error()
-			http.Error(w, e, http.StatusNotImplemented)
+		case errors.As(err, &metrics.InvalidType):
+			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
+
+		return
 	}
 
 	ret, err := h.r.Get(m)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
@@ -110,50 +135,64 @@ func (h *repoHandler) GetFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) GetJSONFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("GetJSONFunc")
+
 	m, err := metrics.FromJSON(r.Body)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		switch {
-		case errors.As(err, &errrs.InvalidType):
+		case errors.As(err, &metrics.InvalidType):
 			http.Error(w, err.Error(), http.StatusNotImplemented)
 		default:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
+		return
 	}
 
 	ret, err := h.r.Get(m)
 	if err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
+
 		switch {
-		case errors.As(err, &errrs.InvalidHash):
+		case errors.As(err, &metrics.InvalidHash):
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		default:
 			http.Error(w, err.Error(), http.StatusNotFound)
 		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret.ToJSON())
 }
 
-func (h *repoHandler) Ping(w http.ResponseWriter, r *http.Request) {
+func (h *repoHandler) PingFunc(w http.ResponseWriter, r *http.Request) {
+	h.logger.Debug().Msg("PingFunc")
+
 	if err := h.r.Ping(); err != nil {
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Write([]byte(""))
 }
 
 func (h *repoHandler) UpdatesFunc(w http.ResponseWriter, r *http.Request) {
-	buf, _ := io.ReadAll(r.Body)
-	//fmt.Println(string(buf))
-	ms, err := metrics.ArrFromJSON(bytes.NewBuffer(buf))
+	h.logger.Debug().Msg("UpdatesFunc")
+
+	ms, err := metrics.ArrFromJSON(r.Body)
 	if err != nil {
-		//fmt.Println(err, "h ERR")
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	//fmt.Println(ms, "h METRICS")
+
 	if err = h.r.SetBatch(ms); err != nil {
-		//fmt.Println(err)
+		h.logger.Error().Stack().Err(err).Msg("")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Write([]byte(""))

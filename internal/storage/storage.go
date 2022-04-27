@@ -3,13 +3,13 @@ package storage
 import (
 	"errors"
 	"io"
-	"log"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/fedoroko/practicum_go/internal/config"
-	"github.com/fedoroko/practicum_go/internal/errrs"
 	"github.com/fedoroko/practicum_go/internal/metrics"
 )
 
@@ -35,6 +35,7 @@ type repo struct {
 	cfg      *config.ServerConfig
 	producer *producer
 	consumer *consumer
+	logger   *config.Logger
 }
 
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
@@ -58,7 +59,7 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 		m.SetInt64(int64(v))
 
 	default:
-		return m, errrs.ThrowInvalidTypeError(m.Type())
+		return m, metrics.ThrowInvalidTypeError(m.Type())
 	}
 
 	if err := m.SetHash(r.cfg.Key); err != nil {
@@ -70,7 +71,7 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 
 func (r *repo) Set(m metrics.Metric) error {
 	if ok, _ := m.CheckHash(r.cfg.Key); !ok {
-		return errrs.ThrowInvalidHashError()
+		return metrics.ThrowInvalidHashError()
 	}
 
 	if r.cfg.StoreInterval == 0 {
@@ -95,20 +96,20 @@ func (r *repo) Set(m metrics.Metric) error {
 		}
 
 	default:
-		return errrs.ThrowInvalidTypeError(m.Type())
+		return metrics.ThrowInvalidTypeError(m.Type())
 	}
 
 	return nil
 }
 
-func (r *repo) SetBatch(metrics []metrics.Metric) error {
-	for _, m := range metrics {
+func (r *repo) SetBatch(ms []metrics.Metric) error {
+	for _, m := range ms {
 		if err := m.CheckType(); err != nil {
 			return err
 		}
 
 		if ok, _ := m.CheckHash(r.cfg.Key); !ok {
-			return errrs.ThrowInvalidHashError()
+			return metrics.ThrowInvalidHashError()
 		}
 
 		if err := r.Set(m); err != nil {
@@ -148,6 +149,7 @@ func (r *repo) List() ([]metrics.Metric, error) {
 }
 
 func (r *repo) restore() error {
+	r.logger.Info().Msg("Restoring DB")
 	defer r.consumer.close()
 	err := r.consumer.read(r)
 	if errors.Is(err, io.EOF) {
@@ -164,7 +166,9 @@ func (r *repo) listenAndWrite() {
 	t := time.NewTicker(r.cfg.StoreInterval)
 	defer t.Stop()
 	for range t.C {
-		r.producer.write(r)
+		if err := r.producer.write(r); err != nil {
+			r.logger.Error().Stack().Err(err).Msg("")
+		}
 	}
 }
 
@@ -173,10 +177,11 @@ func (r *repo) Ping() error {
 }
 
 func (r *repo) Close() error {
+	r.logger.Info().Msg("DB: closed")
 	return r.producer.close()
 }
 
-func repoInterface(cfg *config.ServerConfig) *repo {
+func repoInterface(cfg *config.ServerConfig, logger *config.Logger) *repo {
 	flag := 0
 	if cfg.StoreInterval == 0 {
 		flag = os.O_SYNC
@@ -191,6 +196,8 @@ func repoInterface(cfg *config.ServerConfig) *repo {
 	if err != nil {
 		panic(err)
 	}
+
+	subLogger := logger.With().Str("Component", "DUMMY-DB").Logger()
 	return &repo{
 		G:        make(map[string]gauge),
 		gMtx:     sync.RWMutex{},
@@ -199,21 +206,23 @@ func repoInterface(cfg *config.ServerConfig) *repo {
 		cfg:      cfg,
 		producer: p,
 		consumer: c,
+		logger:   config.NewLogger(&subLogger),
 	}
 }
 
-func New(cfg *config.ServerConfig) Repository {
+func New(cfg *config.ServerConfig, logger *config.Logger) Repository {
 	if cfg.Database != "" {
-		log.Println("POSTGRES >>>>")
-		return postgresInterface(cfg)
+		logger.Info().Msg("DB: postgres")
+		return postgresInterface(cfg, logger)
 	}
-	log.Println("DUMMY >>>>")
-	db := repoInterface(cfg)
+
+	log.Info().Msg("DB: dummy")
+	db := repoInterface(cfg, logger)
 
 	if cfg.Restore {
 		err := db.restore()
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err).Send()
 		}
 	}
 

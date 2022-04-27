@@ -7,5 +7,11 @@ import (
 
 func main() {
 	cfg := config.NewServerConfig().Flags().Env()
-	server.Run(cfg)
+	logger := cfg.GetLogger()
+
+	logger.Debug().Interface("Config", cfg).Send()
+	logger.Info().Msg("Server start")
+	defer logger.Info().Msg("Server closed")
+
+	server.Run(cfg, logger)
 }

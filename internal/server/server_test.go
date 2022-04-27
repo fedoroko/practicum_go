@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/fedoroko/practicum_go/internal/errrs"
+	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/metrics"
 	"github.com/fedoroko/practicum_go/internal/mocks"
 	"github.com/fedoroko/practicum_go/internal/storage"
@@ -43,16 +42,9 @@ func TestRouter(t *testing.T) {
 	m, _ := metrics.RawWithValue("gauge", "Alloc", "1")
 	tdb.EXPECT().Set(m).Return(nil)
 
-	m, _ = metrics.RawWithValue("gauge", "Alloc", "none")
-	tdb.EXPECT().Set(m).Return(errors.New(""))
-
 	m, _ = metrics.Raw("gauge", "Alloc")
 	ret, _ := metrics.RawWithValue("gauge", "Alloc", "1")
 	tdb.EXPECT().Get(m).Return(ret, nil)
-
-	m, _ = metrics.Raw("int", "Alloc")
-	ret, _ = metrics.RawWithValue("int", "Alloc", "1")
-	tdb.EXPECT().Get(m).Return(ret, errrs.ThrowInvalidTypeError("int"))
 
 	tdb.EXPECT().List().Return([]metrics.Metric{}, nil)
 
@@ -64,7 +56,8 @@ func TestRouter(t *testing.T) {
 	tdb.EXPECT().Get(m).Return(ret, nil)
 
 	db = tdb
-	r := router(&db)
+	logger := config.TestLogger()
+	r := router(&db, logger)
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 

@@ -28,7 +28,8 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := New(config.NewServerConfig())
+			logger := config.TestLogger()
+			got := New(config.NewServerConfig(), logger)
 			assert.NotEqual(t, tt.want, got)
 		})
 	}
@@ -51,7 +52,8 @@ func Test_repoInterface(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := repoInterface(config.NewServerConfig())
+			logger := config.TestLogger()
+			got := repoInterface(config.NewServerConfig(), logger)
 			assert.Equal(t, tt.want.G, got.G)
 			assert.Equal(t, tt.want.C, got.C)
 		})
@@ -144,7 +146,8 @@ func Test_repo_List(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := New(config.NewServerConfig())
+			logger := config.TestLogger()
+			r := New(config.NewServerConfig(), logger)
 			got, _ := r.List()
 			assert.NotEqual(t, "", got)
 		})
@@ -168,7 +171,8 @@ func Test_repo_Set(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	r := New(config.NewServerConfig())
+	logger := config.TestLogger()
+	r := New(config.NewServerConfig(), logger)
 	defer r.Close()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

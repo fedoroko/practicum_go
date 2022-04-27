@@ -30,7 +30,8 @@ func Test_newStats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := newStats(tt.args.cfg)
+			logger := config.TestLogger()
+			got := newStats(tt.args.cfg, logger)
 			assert.NotEqual(t, got, stats{})
 		})
 	}

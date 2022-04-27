@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -24,15 +23,17 @@ type stats struct {
 	mtx     sync.RWMutex
 	done    chan struct{}
 	cfg     *config.AgentConfig
+	logger  *config.Logger
 }
 
-func newStats(cfg *config.AgentConfig) *stats {
+func newStats(cfg *config.AgentConfig, logger *config.Logger) *stats {
 	return &stats{
 		metrics: []metrics.Metric{},
 		count:   0,
 		mtx:     sync.RWMutex{},
 		done:    make(chan struct{}),
 		cfg:     cfg,
+		logger:  logger,
 	}
 }
 
@@ -285,62 +286,65 @@ func (s *stats) send() {
 			func() {
 				s.mtx.Lock()
 				defer s.mtx.Unlock()
-				if err := butchRequest(client, s.cfg, s.metrics); err != nil {
-					log.Println(err)
+				if err := butchRequest(client, s.cfg, s.logger, s.metrics); err != nil {
+					s.logger.Error().Stack().Err(err).Msg("")
 				}
 			}()
 		}
 	}
 }
 
-func requestHandler(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
+func requestHandler(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
 	switch cfg.ContentType {
 	case ContentTypeJSON:
-		jsonRequest(c, cfg, m)
+		jsonRequest(c, cfg, logger, m)
 	default:
-		plainRequest(c, cfg, m)
+		plainRequest(c, cfg, logger, m)
 	}
 }
 
-func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
+func jsonRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
 	url := "http://" + cfg.Address + "/update"
-	if cfg.Key != "" {
-		m.SetHash(cfg.Key)
+
+	if err := m.SetHash(cfg.Key); err != nil {
+		logger.Error().Stack().Err(err).Msg("")
 	}
+
 	data, err := json.Marshal(m)
 	if err != nil {
-		log.Println(err)
+		logger.Error().Stack().Err(err).Msg("")
 	}
+
 	resp, err := c.R().
 		SetHeader("Content-Type", ContentTypeJSON).
 		SetBody(data).
 		Post(url)
 
 	if err != nil {
-		log.Println(err, "resp")
+		logger.Error().Stack().Err(err).Msg("")
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Fatal("Wrong Status Code", resp.StatusCode())
+		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
 	}
 }
 
-func plainRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
+func plainRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
 	url := "http://" + cfg.Address + "/update/" + m.Type() + "/" + m.Name() + "/" + m.ToString()
 
 	resp, err := c.R().
 		SetHeader("Content-Type", ContentTypePlain).
 		Post(url)
 	if err != nil {
-		log.Println(err)
+		logger.Error().Stack().Err(err).Msg("")
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Println("Wrong Status Code")
+		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
 	}
 }
 
-func butchRequest(c *resty.Client, cfg *config.AgentConfig, metrics []metrics.Metric) error {
+func butchRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, metrics []metrics.Metric) error {
 	url := "http://" + cfg.Address + "/updates"
 	var data bytes.Buffer
 	encoder := json.NewEncoder(&data)
@@ -353,8 +357,7 @@ func butchRequest(c *resty.Client, cfg *config.AgentConfig, metrics []metrics.Me
 	if err := encoder.Encode(metrics); err != nil {
 		return err
 	}
-
-	fmt.Println(data.String())
+	logger.Debug().Str("Data:", data.String()).Send()
 	resp, err := c.R().
 		SetHeader("Content-Type", ContentTypeJSON).
 		SetBody(data.Bytes()).

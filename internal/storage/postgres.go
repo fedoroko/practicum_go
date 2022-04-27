@@ -3,13 +3,12 @@ package storage
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
+	"time"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 
 	"github.com/fedoroko/practicum_go/internal/config"
-	"github.com/fedoroko/practicum_go/internal/errrs"
 	"github.com/fedoroko/practicum_go/internal/metrics"
 )
 
@@ -20,6 +19,7 @@ type postgres struct {
 	listStmt   *sql.Stmt
 	buffer     []metrics.Metric
 	cfg        *config.ServerConfig
+	logger     *config.Logger
 }
 
 type tempMetric struct {
@@ -86,7 +86,7 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 
 func (p *postgres) Set(m metrics.Metric) error {
 	if ok, _ := m.CheckHash(p.cfg.Key); !ok {
-		return errrs.ThrowInvalidHashError()
+		return metrics.ThrowInvalidHashError()
 	}
 
 	_, err := p.upsertStmt.Exec(
@@ -102,19 +102,18 @@ func (p *postgres) Set(m metrics.Metric) error {
 	return nil
 }
 
-func (p *postgres) SetBatch(metrics []metrics.Metric) error {
+func (p *postgres) SetBatch(ms []metrics.Metric) error {
 	if p.DB == nil {
 		return errors.New("no db")
 	}
-	fmt.Println(metrics)
-	for _, m := range metrics {
-		fmt.Println(m, "METRIC!!!")
+
+	for _, m := range ms {
 		if err := m.CheckType(); err != nil {
 			return err
 		}
 
 		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
-			return errrs.ThrowInvalidHashError()
+			return metrics.ThrowInvalidHashError()
 		}
 
 		if err := p.addMetric(m); err != nil {
@@ -154,6 +153,7 @@ func (p *postgres) Ping() error {
 }
 
 func (p *postgres) Close() error {
+	p.logger.Info().Msg("DB: closed")
 	return p.DB.Close()
 }
 
@@ -200,8 +200,13 @@ func (p *postgres) flush() error {
 	return nil
 }
 
-func postgresInterface(cfg *config.ServerConfig) *postgres {
+func postgresInterface(cfg *config.ServerConfig, logger *config.Logger) *postgres {
 	db, err := sql.Open("pgx", cfg.Database)
+	db.SetMaxOpenConns(30)
+	db.SetMaxIdleConns(30)
+	db.SetConnMaxIdleTime(time.Second * 30)
+	db.SetConnMaxLifetime(time.Minute * 2)
+
 	if err != nil {
 		panic(err)
 	}
@@ -228,6 +233,7 @@ func postgresInterface(cfg *config.ServerConfig) *postgres {
 		panic(err)
 	}
 
+	subLogger := logger.With().Str("Component", "POSTGRES-DB").Logger()
 	return &postgres{
 		DB:         db,
 		getStmt:    getStmt,
@@ -235,5 +241,6 @@ func postgresInterface(cfg *config.ServerConfig) *postgres {
 		upsertStmt: upsertStmt,
 		cfg:        cfg,
 		buffer:     make([]metrics.Metric, 0, 100),
+		logger:     config.NewLogger(&subLogger),
 	}
 }

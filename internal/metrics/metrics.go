@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-
-	"github.com/fedoroko/practicum_go/internal/errrs"
 )
 
 const (
@@ -125,7 +123,7 @@ func (m *metric) CheckType() error {
 	case CounterType:
 		return nil
 	default:
-		return errrs.ThrowInvalidTypeError(m.Type())
+		return ThrowInvalidTypeError(m.Type())
 	}
 }
 
@@ -186,7 +184,7 @@ func RawWithValue(t string, n string, v string) (Metric, error) {
 		}
 		m.Delta = &i64
 	default:
-		return m, errrs.ThrowInvalidTypeError(t)
+		return m, ThrowInvalidTypeError(t)
 	}
 	return m, nil
 }
@@ -197,7 +195,7 @@ func Raw(t string, n string) (Metric, error) {
 		MType: t,
 	}
 	if t != GaugeType && t != CounterType {
-		return m, errrs.ThrowInvalidTypeError(t)
+		return m, ThrowInvalidTypeError(t)
 	}
 
 	return m, nil

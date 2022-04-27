@@ -2,10 +2,13 @@ package config
 
 import (
 	"flag"
-	"log"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
 )
 
 type Config interface {
@@ -20,6 +23,7 @@ type ServerConfig struct {
 	StoreFile     string        `env:"STORE_FILE"`
 	Key           string        `env:"KEY"`
 	Database      string        `env:"DATABASE_DSN"`
+	Debug         bool
 }
 
 func (s *ServerConfig) Flags() *ServerConfig {
@@ -29,6 +33,7 @@ func (s *ServerConfig) Flags() *ServerConfig {
 	flag.StringVar(&s.StoreFile, "f", "/tmp/devops-metrics-db.json", "Store file path")
 	flag.StringVar(&s.Key, "k", "", "Key for hashing")
 	flag.StringVar(&s.Database, "d", "", "Database DSN")
+	flag.BoolVar(&s.Debug, "debug", false, "Debug mode")
 	flag.Parse()
 
 	return s
@@ -37,7 +42,7 @@ func (s *ServerConfig) Flags() *ServerConfig {
 func (s *ServerConfig) Env() *ServerConfig {
 	err := env.Parse(s)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 	}
 
 	return s
@@ -59,6 +64,7 @@ type AgentConfig struct {
 	ShutdownInterval time.Duration
 	ContentType      string
 	Key              string `env:"KEY"`
+	Debug            bool
 }
 
 func (a *AgentConfig) Flags() *AgentConfig {
@@ -66,6 +72,7 @@ func (a *AgentConfig) Flags() *AgentConfig {
 	flag.DurationVar(&a.PollInterval, "p", time.Second*2, "Poll count interval")
 	flag.DurationVar(&a.ReportInterval, "r", time.Second*10, "Report interval")
 	flag.StringVar(&a.Key, "k", "", "Key for hashing")
+	flag.BoolVar(&a.Debug, "debug", false, "Debug mode - bool")
 	flag.Parse()
 
 	return a
@@ -74,7 +81,7 @@ func (a *AgentConfig) Flags() *AgentConfig {
 func (a *AgentConfig) Env() *AgentConfig {
 	err := env.Parse(a)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 	}
 
 	return a
@@ -88,4 +95,56 @@ func NewAgentConfig() *AgentConfig {
 		ShutdownInterval: time.Second * 500,
 		ContentType:      "text/plain",
 	}
+}
+
+type Logger struct {
+	*zerolog.Logger
+}
+
+func TestLogger() *Logger {
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: zerolog.TimeFormatUnix}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
+	return &Logger{
+		Logger: &logger,
+	}
+}
+
+func NewLogger(logger *zerolog.Logger) *Logger {
+	return &Logger{
+		Logger: logger,
+	}
+}
+
+func (s *ServerConfig) GetLogger() *Logger {
+	logLevel := zerolog.InfoLevel
+	if s.Debug {
+		logLevel = zerolog.DebugLevel
+	}
+
+	zerolog.SetGlobalLevel(logLevel)
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: zerolog.TimeFormatUnix}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
+	return NewLogger(&logger)
+}
+
+func (a *AgentConfig) GetLogger() *Logger {
+	logLevel := zerolog.InfoLevel
+	if a.Debug {
+		logLevel = zerolog.DebugLevel
+	}
+
+	zerolog.SetGlobalLevel(logLevel)
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: zerolog.TimeFormatUnix}
+	logger := zerolog.New(output).With().Timestamp().Logger()
+
+	return NewLogger(&logger)
 }

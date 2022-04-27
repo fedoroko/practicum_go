@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,12 +14,11 @@ import (
 	"github.com/fedoroko/practicum_go/internal/storage"
 )
 
-func Run(cfg *config.ServerConfig) {
-	log.Println(cfg, "CONFIG >>>")
-	db := storage.New(cfg)
+func Run(cfg *config.ServerConfig, logger *config.Logger) {
+	db := storage.New(cfg, logger)
 	defer db.Close()
 
-	r := router(&db)
+	r := router(&db, logger)
 
 	server := &http.Server{
 		Addr:    cfg.Address,
@@ -30,7 +28,7 @@ func Run(cfg *config.ServerConfig) {
 	defer server.Close()
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			log.Println(err)
+			logger.Error().Err(err).Send()
 		}
 	}()
 
@@ -43,7 +41,7 @@ func Run(cfg *config.ServerConfig) {
 	<-sig
 }
 
-func router(db *storage.Repository) chi.Router {
+func router(db *storage.Repository, logger *config.Logger) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
@@ -52,7 +50,7 @@ func router(db *storage.Repository) chi.Router {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
 
-	h := handlers.NewRepoHandler(*db)
+	h := handlers.NewRepoHandler(*db, logger)
 
 	r.Get("/", h.IndexFunc)
 	r.Route("/value", func(r chi.Router) {
@@ -64,7 +62,7 @@ func router(db *storage.Repository) chi.Router {
 		r.Post("/{type}/{name}/{value}", h.UpdateFunc)
 	})
 	r.Route("/ping", func(r chi.Router) {
-		r.Get("/", h.Ping)
+		r.Get("/", h.PingFunc)
 	})
 	r.Route("/updates", func(r chi.Router) {
 		r.Post("/", h.UpdatesFunc)
