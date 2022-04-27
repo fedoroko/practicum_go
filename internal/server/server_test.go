@@ -3,18 +3,20 @@ package server
 import (
 	"bytes"
 	"errors"
-	"github.com/fedoroko/practicum_go/internal/errrs"
-	"github.com/fedoroko/practicum_go/internal/metrics"
-	"github.com/fedoroko/practicum_go/internal/mocks"
-	"github.com/fedoroko/practicum_go/internal/storage"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/fedoroko/practicum_go/internal/errrs"
+	"github.com/fedoroko/practicum_go/internal/metrics"
+	"github.com/fedoroko/practicum_go/internal/mocks"
+	"github.com/fedoroko/practicum_go/internal/storage"
 )
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {

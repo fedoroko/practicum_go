@@ -6,9 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/fedoroko/practicum_go/internal/errrs"
 	"io"
 	"strconv"
+
+	"github.com/fedoroko/practicum_go/internal/errrs"
 )
 
 const (
