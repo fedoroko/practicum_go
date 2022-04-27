@@ -139,3 +139,11 @@ func (h *repoHandler) Ping(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(""))
 }
+
+func (h *repoHandler) UpdatesFunc(w http.ResponseWriter, r *http.Request) {
+	if err := h.r.SetBatch(r.Body); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Write([]byte(""))
+}

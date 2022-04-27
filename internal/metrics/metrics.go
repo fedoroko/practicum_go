@@ -196,6 +196,16 @@ func FromJSON(j io.Reader) (Metric, error) {
 	return &m, nil
 }
 
+func ArrFromJSON(j io.Reader) ([]Metric, error) {
+	arr := make([]Metric, 0)
+	decoder := json.NewDecoder(j)
+	if err := decoder.Decode(&arr); err != nil {
+		return arr, err
+	}
+
+	return arr, nil
+}
+
 func New(n string, t string, v float64, d int64) Metric {
 	return &metric{
 		ID:    n,

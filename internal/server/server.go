@@ -64,6 +64,7 @@ func router(db *storage.Repository) chi.Router {
 		r.Post("/{type}/{name}/{value}", h.UpdateFunc)
 	})
 	r.Get("/ping", h.Ping)
+	r.Post("/updates", h.UpdatesFunc)
 
 	return r
 }

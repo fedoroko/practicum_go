@@ -1,7 +1,9 @@
 package agent
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -283,8 +285,8 @@ func (s *stats) send() {
 			func() {
 				s.mtx.Lock()
 				defer s.mtx.Unlock()
-				for _, m := range s.metrics {
-					requestHandler(client, s.cfg, m)
+				if err := butchRequest(client, s.cfg, s.metrics); err != nil {
+					log.Println(err)
 				}
 			}()
 		}
@@ -305,7 +307,6 @@ func jsonRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	if cfg.Key != "" {
 		m.SetHash(cfg.Key)
 	}
-	fmt.Println(m)
 	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)
@@ -337,4 +338,34 @@ func plainRequest(c *resty.Client, cfg *config.AgentConfig, m metrics.Metric) {
 	if resp.StatusCode() != http.StatusOK {
 		log.Println("Wrong Status Code")
 	}
+}
+
+func butchRequest(c *resty.Client, cfg *config.AgentConfig, metrics []metrics.Metric) error {
+	url := "http://" + cfg.Address + "/updates"
+	var data bytes.Buffer
+	encoder := json.NewEncoder(&data)
+	for _, m := range metrics {
+		if cfg.Key != "" {
+			m.SetHash(cfg.Key)
+		}
+		if err := encoder.Encode(&m); err != nil {
+			return err
+		}
+	}
+
+	fmt.Println(data.String())
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypeJSON).
+		SetBody(data.Bytes()).
+		Post(url)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return errors.New("wrong status code: " + fmt.Sprintf("%d", resp.StatusCode()))
+	}
+
+	return nil
 }

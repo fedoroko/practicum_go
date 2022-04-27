@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -14,8 +15,9 @@ import (
 )
 
 type Repository interface {
-	Get(m metrics.Metric) (metrics.Metric, error)
-	Set(m metrics.Metric) error
+	Get(metrics.Metric) (metrics.Metric, error)
+	Set(metrics.Metric) error
+	SetBatch(io.Reader) error
 	List() ([]metrics.Metric, error)
 
 	Ping() error
@@ -100,6 +102,22 @@ func (r *repo) Set(m metrics.Metric) error {
 	}
 
 	return nil
+}
+
+func (r *repo) SetBatch(j io.Reader) error {
+	decoder := json.NewDecoder(j)
+	for {
+		t := tempMetric{}
+		if err := decoder.Decode(&t); errors.Is(err, io.EOF) {
+			return nil
+		} else if err != nil {
+			return err
+		}
+		m := t.toMetric()
+		if err := r.Set(m); err != nil {
+			return err
+		}
+	}
 }
 
 func (r *repo) List() ([]metrics.Metric, error) {
