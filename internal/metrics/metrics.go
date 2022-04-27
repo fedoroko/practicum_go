@@ -30,6 +30,7 @@ type Metric interface {
 
 	SetHash(string) error
 	CheckHash(string) (bool, error)
+	CheckType() error
 
 	ToString() string
 	ToJSON() []byte
@@ -86,6 +87,9 @@ func (m *metric) SetInt64(i int64) {
 }
 
 func (m *metric) SetHash(key string) error {
+	if key == "" {
+		return nil
+	}
 	data := getHashSrc(m)
 
 	h := hmac.New(sha256.New, []byte(key))
@@ -96,7 +100,7 @@ func (m *metric) SetHash(key string) error {
 }
 
 func (m *metric) CheckHash(key string) (bool, error) {
-	if m.Hash == "" {
+	if m.Hash == "" || key == "" {
 		return true, nil
 	}
 
@@ -111,6 +115,17 @@ func (m *metric) CheckHash(key string) (bool, error) {
 	}
 
 	return hmac.Equal(hash, currHash), nil
+}
+
+func (m *metric) CheckType() error {
+	switch m.Type() {
+	case GaugeType:
+		return nil
+	case CounterType:
+		return nil
+	default:
+		return errrs.ThrowInvalidTypeError(m.Type())
+	}
 }
 
 func getHashSrc(m *metric) []byte {
@@ -194,21 +209,26 @@ func FromJSON(j io.Reader) (Metric, error) {
 		return &m, err
 	}
 
-	if m.Type() != GaugeType && m.Type() != CounterType {
-		return &m, errrs.ThrowInvalidTypeError(m.Type())
-	}
-
-	return &m, nil
+	return &m, m.CheckType()
 }
 
 func ArrFromJSON(j io.Reader) ([]Metric, error) {
-	arr := make([]Metric, 0)
+	ret := make([]Metric, 0)
+	metrics := make([]metric, 0)
 	decoder := json.NewDecoder(j)
-	if err := decoder.Decode(&arr); err != nil {
-		return arr, err
+	if err := decoder.Decode(&metrics); err != nil {
+		return ret, err
 	}
 
-	return arr, nil
+	for _, m := range metrics {
+		ret = append(ret, &m)
+	}
+
+	return ret, nil
+}
+
+func Blank() Metric {
+	return &metric{}
 }
 
 func New(n string, t string, v float64, d int64) Metric {

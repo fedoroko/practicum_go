@@ -5,7 +5,6 @@
 package mocks
 
 import (
-	io "io"
 	reflect "reflect"
 
 	metrics "github.com/fedoroko/practicum_go/internal/metrics"
@@ -108,7 +107,7 @@ func (mr *MockRepositoryMockRecorder) Set(arg0 interface{}) *gomock.Call {
 }
 
 // SetBatch mocks base method.
-func (m *MockRepository) SetBatch(arg0 io.Reader) error {
+func (m *MockRepository) SetBatch(arg0 []metrics.Metric) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetBatch", arg0)
 	ret0, _ := ret[0].(error)

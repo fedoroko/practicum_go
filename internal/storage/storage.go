@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -17,7 +16,7 @@ import (
 type Repository interface {
 	Get(metrics.Metric) (metrics.Metric, error)
 	Set(metrics.Metric) error
-	SetBatch(io.Reader) error
+	SetBatch([]metrics.Metric) error
 	List() ([]metrics.Metric, error)
 
 	Ping() error
@@ -62,18 +61,16 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 		return m, errrs.ThrowInvalidTypeError(m.Type())
 	}
 
-	if r.cfg.Key != "" {
-		m.SetHash(r.cfg.Key)
+	if err := m.SetHash(r.cfg.Key); err != nil {
+		return m, err
 	}
 
 	return m, nil
 }
 
 func (r *repo) Set(m metrics.Metric) error {
-	if r.cfg.Key != "" {
-		if ok, _ := m.CheckHash(r.cfg.Key); !ok {
-			return errrs.ThrowInvalidHashError()
-		}
+	if ok, _ := m.CheckHash(r.cfg.Key); !ok {
+		return errrs.ThrowInvalidHashError()
 	}
 
 	if r.cfg.StoreInterval == 0 {
@@ -104,20 +101,22 @@ func (r *repo) Set(m metrics.Metric) error {
 	return nil
 }
 
-func (r *repo) SetBatch(j io.Reader) error {
-	decoder := json.NewDecoder(j)
-	for {
-		t := tempMetric{}
-		if err := decoder.Decode(&t); errors.Is(err, io.EOF) {
-			return nil
-		} else if err != nil {
+func (r *repo) SetBatch(metrics []metrics.Metric) error {
+	for _, m := range metrics {
+		if err := m.CheckType(); err != nil {
 			return err
 		}
-		m := t.toMetric()
+
+		if ok, _ := m.CheckHash(r.cfg.Key); !ok {
+			return errrs.ThrowInvalidHashError()
+		}
+
 		if err := r.Set(m); err != nil {
 			return err
 		}
 	}
+
+	return nil
 }
 
 func (r *repo) List() ([]metrics.Metric, error) {

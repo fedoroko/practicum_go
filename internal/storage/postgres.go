@@ -2,9 +2,8 @@ package storage
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
-	"io"
+	"fmt"
 	"strings"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -77,18 +76,17 @@ func (p *postgres) Get(m metrics.Metric) (metrics.Metric, error) {
 	}
 
 	ret := t.toMetric()
-	if p.cfg.Key != "" {
-		ret.SetHash(p.cfg.Key)
+
+	if err = ret.SetHash(p.cfg.Key); err != nil {
+		return ret, err
 	}
 
 	return ret, nil
 }
 
 func (p *postgres) Set(m metrics.Metric) error {
-	if p.cfg.Key != "" {
-		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
-			return errrs.ThrowInvalidHashError()
-		}
+	if ok, _ := m.CheckHash(p.cfg.Key); !ok {
+		return errrs.ThrowInvalidHashError()
 	}
 
 	_, err := p.upsertStmt.Exec(
@@ -104,25 +102,27 @@ func (p *postgres) Set(m metrics.Metric) error {
 	return nil
 }
 
-func (p *postgres) SetBatch(j io.Reader) error {
+func (p *postgres) SetBatch(metrics []metrics.Metric) error {
 	if p.DB == nil {
 		return errors.New("no db")
 	}
-
-	decoder := json.NewDecoder(j)
-	for {
-		t := tempMetric{}
-		if err := decoder.Decode(&t); errors.Is(err, io.EOF) {
-			return p.flush()
-		} else if err != nil {
+	fmt.Println(metrics)
+	for _, m := range metrics {
+		fmt.Println(m, "METRIC!!!")
+		if err := m.CheckType(); err != nil {
 			return err
 		}
 
-		m := t.toMetric()
+		if ok, _ := m.CheckHash(p.cfg.Key); !ok {
+			return errrs.ThrowInvalidHashError()
+		}
+
 		if err := p.addMetric(m); err != nil {
 			return err
 		}
 	}
+
+	return p.flush()
 }
 
 func (p *postgres) List() ([]metrics.Metric, error) {

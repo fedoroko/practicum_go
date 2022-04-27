@@ -345,12 +345,13 @@ func butchRequest(c *resty.Client, cfg *config.AgentConfig, metrics []metrics.Me
 	var data bytes.Buffer
 	encoder := json.NewEncoder(&data)
 	for _, m := range metrics {
-		if cfg.Key != "" {
-			m.SetHash(cfg.Key)
-		}
-		if err := encoder.Encode(&m); err != nil {
+		if err := m.SetHash(cfg.Key); err != nil {
 			return err
 		}
+	}
+
+	if err := encoder.Encode(metrics); err != nil {
+		return err
 	}
 
 	fmt.Println(data.String())
