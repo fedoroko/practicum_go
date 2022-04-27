@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -141,7 +143,10 @@ func (h *repoHandler) Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *repoHandler) UpdatesFunc(w http.ResponseWriter, r *http.Request) {
-	if err := h.r.SetBatch(r.Body); err != nil {
+	buf, _ := io.ReadAll(r.Body)
+	fmt.Println(string(buf))
+	if err := h.r.SetBatch(bytes.NewBuffer(buf)); err != nil {
+		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
