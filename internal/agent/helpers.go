@@ -47,6 +47,7 @@ func (s *stats) clear() {
 
 func (s *stats) updateCounter() {
 	s.count += int64(len(s.metrics))
+	//
 }
 
 func (s *stats) send() {
