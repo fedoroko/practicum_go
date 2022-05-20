@@ -58,6 +58,7 @@ func (s *stats) collect() {
 //тут могу использовать for-select,
 //но ожидаю ровно два значения в канале,
 //поэтому for-select кажется избыточным
+
 func (s *stats) getMetrics() {
 	metricsCh := make(chan []metrics.Metric)
 	defer close(metricsCh)
