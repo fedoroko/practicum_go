@@ -41,8 +41,8 @@ type repo struct {
 func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 	switch m.Type() {
 	case metrics.GaugeType:
-		r.gMtx.Lock()
-		defer r.gMtx.Unlock()
+		r.gMtx.RLock()
+		defer r.gMtx.RUnlock()
 		v, ok := r.G[m.Name()]
 		if !ok {
 			return m, errors.New("not found")
@@ -50,8 +50,8 @@ func (r *repo) Get(m metrics.Metric) (metrics.Metric, error) {
 		m.SetFloat64(float64(v))
 
 	case metrics.CounterType:
-		r.cMtx.Lock()
-		defer r.cMtx.Unlock()
+		r.cMtx.RLock()
+		defer r.cMtx.RUnlock()
 		v, ok := r.C[m.Name()]
 		if !ok {
 			return m, errors.New("not found")
@@ -80,14 +80,14 @@ func (r *repo) Set(m metrics.Metric) error {
 
 	switch m.Type() {
 	case metrics.GaugeType:
-		r.gMtx.RLock()
-		defer r.gMtx.RUnlock()
+		r.gMtx.Lock()
+		defer r.gMtx.Unlock()
 
 		r.G[m.Name()] = gauge(m.Float64Value())
 
 	case metrics.CounterType:
-		r.cMtx.RLock()
-		defer r.cMtx.RUnlock()
+		r.cMtx.Lock()
+		defer r.cMtx.Unlock()
 
 		if cur, ok := r.C[m.Name()]; ok {
 			r.C[m.Name()] = cur + counter(m.Int64Value())
@@ -123,8 +123,8 @@ func (r *repo) SetBatch(ms []metrics.Metric) error {
 func (r *repo) List() ([]metrics.Metric, error) {
 	var ret []metrics.Metric
 
-	r.gMtx.Lock()
-	defer r.gMtx.Unlock()
+	r.gMtx.RLock()
+	defer r.gMtx.RUnlock()
 	for n, v := range r.G {
 		ret = append(ret, metrics.New(
 			n,
@@ -134,8 +134,8 @@ func (r *repo) List() ([]metrics.Metric, error) {
 		)
 	}
 
-	r.cMtx.Lock()
-	defer r.cMtx.Unlock()
+	r.cMtx.RLock()
+	defer r.cMtx.RUnlock()
 	for n, v := range r.C {
 		ret = append(ret, metrics.New(
 			n,
