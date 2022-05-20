@@ -5,18 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
-
 	"github.com/fedoroko/practicum_go/internal/config"
 	"github.com/fedoroko/practicum_go/internal/metrics"
+	"github.com/go-resty/resty/v2"
 )
 
 type stats struct {
@@ -39,123 +38,13 @@ func newStats(cfg *config.AgentConfig, logger *config.Logger) *stats {
 	}
 }
 
-func (s *stats) clear() {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	s.metrics = s.metrics[:0]
-}
-
 func (s *stats) updateCounter() {
 	s.count += int64(len(s.metrics))
-	//
 }
 
-func (s *stats) send() {
-	client := resty.New()
-	client.
-		SetRetryCount(3).
-		SetRetryWaitTime(20 * time.Second).
-		SetRetryMaxWaitTime(100 * time.Second)
-
-	sendTicker := time.NewTicker(s.cfg.ReportInterval)
-	defer sendTicker.Stop()
-	for {
-		select {
-		case <-s.done:
-			return
-		case <-sendTicker.C:
-			func() {
-				s.mtx.Lock()
-				defer s.mtx.Unlock()
-				fmt.Println(len(s.metrics), s.count)
-				if err := batchRequest(client, s.cfg, s.logger, s.metrics); err != nil {
-					s.logger.Error().Stack().Err(err).Msg("")
-				}
-			}()
-		}
-	}
-}
-
-func requestHandler(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
-	switch cfg.ContentType {
-	case ContentTypeJSON:
-		jsonRequest(c, cfg, logger, m)
-	default:
-		plainRequest(c, cfg, logger, m)
-	}
-}
-
-func jsonRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
-	url := "http://" + cfg.Address + "/update"
-
-	if err := m.SetHash(cfg.Key); err != nil {
-		logger.Error().Stack().Err(err).Msg("")
-	}
-
-	data, err := json.Marshal(m)
-	if err != nil {
-		logger.Error().Stack().Err(err).Msg("")
-	}
-
-	resp, err := c.R().
-		SetHeader("Content-Type", ContentTypeJSON).
-		SetBody(data).
-		Post(url)
-
-	if err != nil {
-		logger.Error().Stack().Err(err).Msg("")
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
-	}
-}
-
-func plainRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
-	url := "http://" + cfg.Address + "/update/" + m.Type() + "/" + m.Name() + "/" + m.ToString()
-
-	resp, err := c.R().
-		SetHeader("Content-Type", ContentTypePlain).
-		Post(url)
-	if err != nil {
-		logger.Error().Stack().Err(err).Msg("")
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
-	}
-}
-
-func batchRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, metrics []metrics.Metric) error {
-	url := "http://" + cfg.Address + "/updates"
-	var data bytes.Buffer
-	encoder := json.NewEncoder(&data)
-	for _, m := range metrics {
-		if err := m.SetHash(cfg.Key); err != nil {
-			return err
-		}
-	}
-
-	if err := encoder.Encode(metrics); err != nil {
-		return err
-	}
-	logger.Debug().Str("Data:", data.String()).Send()
-	resp, err := c.R().
-		SetHeader("Content-Type", ContentTypeJSON).
-		SetBody(data.Bytes()).
-		Post(url)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return errors.New("wrong status code: " + fmt.Sprintf("%d", resp.StatusCode()))
-	}
-
-	return nil
-}
-
+//сначала хотел использовать fan-in fan-out,
+//но разобравшись в процессе не нашел ему тут места,
+//ровно как и for-select
 func (s *stats) collect() {
 	pollTicker := time.NewTicker(s.cfg.PollInterval)
 	defer pollTicker.Stop()
@@ -165,6 +54,9 @@ func (s *stats) collect() {
 	}
 }
 
+//тут могу использовать for-select,
+//но ожидаю ровно два значения в канале,
+//поэтому for-select кажется избыточным
 func (s *stats) getMetrics() {
 	metricsCh := make(chan []metrics.Metric)
 	defer close(metricsCh)
@@ -422,4 +314,109 @@ func getAdvancedMetrics(metricsCh chan<- []metrics.Metric) {
 	}
 
 	metricsCh <- m
+}
+
+func (s *stats) send() {
+	client := resty.New()
+	client.
+		SetRetryCount(3).
+		SetRetryWaitTime(20 * time.Second).
+		SetRetryMaxWaitTime(100 * time.Second)
+
+	sendTicker := time.NewTicker(s.cfg.ReportInterval)
+	defer sendTicker.Stop()
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-sendTicker.C:
+			func() {
+				s.mtx.Lock()
+				defer s.mtx.Unlock()
+				if err := batchRequest(client, s.cfg, s.logger, s.metrics); err != nil {
+					s.logger.Error().Stack().Err(err).Msg("")
+				}
+			}()
+		}
+	}
+}
+
+func requestHandler(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
+	switch cfg.ContentType {
+	case ContentTypeJSON:
+		jsonRequest(c, cfg, logger, m)
+	default:
+		plainRequest(c, cfg, logger, m)
+	}
+}
+
+func jsonRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
+	url := "http://" + cfg.Address + "/update"
+
+	if err := m.SetHash(cfg.Key); err != nil {
+		logger.Error().Stack().Err(err).Msg("")
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		logger.Error().Stack().Err(err).Msg("")
+	}
+
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypeJSON).
+		SetBody(data).
+		Post(url)
+
+	if err != nil {
+		logger.Error().Stack().Err(err).Msg("")
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
+	}
+}
+
+func plainRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, m metrics.Metric) {
+	url := "http://" + cfg.Address + "/update/" + m.Type() + "/" + m.Name() + "/" + m.ToString()
+
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypePlain).
+		Post(url)
+	if err != nil {
+		logger.Error().Stack().Err(err).Msg("")
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		logger.Fatal().Stack().Int("status code", resp.StatusCode()).Msg("response status code not 200")
+	}
+}
+
+func batchRequest(c *resty.Client, cfg *config.AgentConfig, logger *config.Logger, metrics []metrics.Metric) error {
+	url := "http://" + cfg.Address + "/updates"
+	var data bytes.Buffer
+	encoder := json.NewEncoder(&data)
+	for _, m := range metrics {
+		if err := m.SetHash(cfg.Key); err != nil {
+			return err
+		}
+	}
+
+	if err := encoder.Encode(metrics); err != nil {
+		return err
+	}
+	logger.Debug().Str("Data:", data.String()).Send()
+	resp, err := c.R().
+		SetHeader("Content-Type", ContentTypeJSON).
+		SetBody(data.Bytes()).
+		Post(url)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return errors.New("wrong status code: " + fmt.Sprintf("%d", resp.StatusCode()))
+	}
+
+	return nil
 }
